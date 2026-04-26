@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "on-surface-variant": "#596065",
+          "surface-container-low": "#f2f4f6",
+          "surface-container-high": "#e4e9ee",
+          "on-surface": "#2d3338",
+          "outline": "#757c81",
+          "surface-container": "#ebeef2",
+          "surface-container-highest": "#dde3e9",
+          "surface-container-lowest": "#ffffff",
+          "surface": "#f9f9fb",
+          "secondary-container": "#d8e2ff",
+          "background": "#f9f9fb",
+          "outline-variant": "#acb3b8",
+          "secondary": "#005bc2",
+          "secondary-dim": "#0050ab",
+        },
+        borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+        fontFamily: { headline: ["Inter"], body: ["Inter"], label: ["Inter"] }
+      }
+    }
+  }
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; margin: 0; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+  .hero-gradient { background: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(216,226,255,0.45) 0%, rgba(249,249,251,0) 100%); }
+
+  @keyframes cardIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  .card-anim { animation: cardIn 0.35s cubic-bezier(.22,.68,0,1.2) both; }
+  .pill-active { background: #2d3338 !important; color: #f9f9fb !important; }
+  .subpill-active { background: #005bc2 !important; color: #ffffff !important; }
+  #empty-state { display: none; }
+  .ihb-page { display: none; }
+  .ihb-page.active { display: block; }
+
+  /* Card hover polish */
+  .event-card { transition: box-shadow 0.3s ease, transform 0.3s cubic-bezier(.22,.68,0,1.2); }
+  .event-card:hover { box-shadow: 0 12px 40px -8px rgba(0,91,194,0.12), 0 4px 16px -4px rgba(0,0,0,0.08); transform: translateY(-2px); }
+  .event-card .card-img { transition: transform 0.6s cubic-bezier(.22,.68,0,1.2); }
+  .event-card:hover .card-img { transform: scale(1.04); }
+
+  @keyframes quoteFadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes quoteFadeOut { from { opacity:1; transform:translateY(0); } to { opacity:0; transform:translateY(-6px); } }
+  .quote-in  { animation: quoteFadeIn  0.7s ease forwards; }
+  .quote-out { animation: quoteFadeOut 0.5s ease forwards; }
+
+  .otd-scroll { display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
+  .otd-scroll::-webkit-scrollbar { display:none; }
+  #category-filters::-webkit-scrollbar { display:none; }
+  #community-subcat-filters::-webkit-scrollbar { display:none; }
+  .otd-card { flex:0 0 220px; background:#fff; border-radius:12px; border:1px solid rgba(172,179,184,0.15); padding:14px 16px; display:flex; flex-direction:column; gap:6px; box-shadow:0 1px 3px rgba(0,0,0,0.04); transition:box-shadow 0.2s; }
+  .otd-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.08); }
+
+  /* ── PUBLIC MOMENT PAGE ── */
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  .fade-up { animation: fadeUp 0.5s ease both; }
+  .fade-up-1 { animation-delay:0.05s; }
+  .fade-up-2 { animation-delay:0.12s; }
+  .fade-up-3 { animation-delay:0.20s; }
+  .fade-up-4 { animation-delay:0.28s; }
+
+  /* Big clock pulse */
+  @keyframes clockPulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+  .moment-clock { font-family:'Space Mono', monospace; animation: clockPulse 2s ease-in-out infinite; letter-spacing: -0.02em; }
+
+  /* Moment hero dark section */
+  .moment-hero {
+    background: #0d0d0d;
+    position: relative;
+    overflow: hidden;
+  }
+  .moment-hero::before {
+    content:'';
+    position:absolute; inset:0;
+    background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(0,91,194,0.18) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .moment-hero-img {
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+    opacity:0.12; filter:grayscale(100%);
+  }
+
+  /* Grain overlay */
+  .grain::after {
+    content:'';
+    position:absolute; inset:0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity:0.4; pointer-events:none;
+  }
+
+  /* Share button animation */
+  .share-btn { transition: all 0.2s; }
+  .share-btn:active { transform: scale(0.94); }
+
+  /* Copy toast */
+  #copy-toast {
+    transition: all 0.3s;
+    transform: translateY(10px);
+    opacity: 0;
+    pointer-events: none;
+  }
+  #copy-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* ── INSTAGRAM CARD MODAL ── */
+  .card-modal-overlay {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Format selector */
+  .format-btn { transition: all 0.2s; }
+  .format-btn.active {
+    background: #2d3338 !important;
+    color: #fff !important;
+    border-color: #2d3338 !important;
+  }
+
+  /* Canvas wrapper — scales the 1080px canvas down visually */
+  .canvas-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .canvas-wrapper canvas {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  /* Vis option */
+  .vis-opt.selected { border-color: #005bc2 !important; background: rgba(0,91,194,0.04); }
+  .vis-opt.selected .vdot { background: #005bc2 !important; border-color: #005bc2 !important; }
+
+  /* Listing toggle */
+  #listing-box.active { border-color: #005bc2 !important; }
+</style>
+<template id="__bundler_thumbnail" data-bg-color="#f9f9fb">
+  <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+    <rect width="400" height="300" fill="#f9f9fb"/>
+    <text x="200" y="130" font-family="Georgia, serif" font-style="italic" font-weight="900" font-size="36" fill="#2d3338" text-anchor="middle">it has been</text>
+    <text x="200" y="170" font-family="monospace" font-size="22" fill="#005bc2" text-anchor="middle">00:00:00</text>
+    <rect x="120" y="190" width="160" height="3" rx="2" fill="#005bc2" opacity="0.3"/>
+  </svg>
+</template>
+</head>
+<body class="bg-background text-on-background selection:bg-secondary-container">
+
+<!-- ══════════════════════════════════════════
+     NAV
+══════════════════════════════════════════ -->
+<nav class="fixed top-0 w-full z-50 bg-white/85 backdrop-blur-xl border-b border-outline-variant/10 shadow-sm shadow-black/[0.02]">
+  <div class="flex justify-between items-center w-full px-6 py-3.5 max-w-screen-xl mx-auto">
+    <button onclick="showPage('home')" class="text-xl font-black tracking-tighter text-zinc-900 italic hover:opacity-60 transition-opacity">it has been</button>
+    <div class="hidden md:flex flex-col items-center gap-0.5">
+      <span id="nav-clock" class="text-sm font-mono font-bold text-on-surface tracking-widest tabular-nums" style="font-family:'Space Mono',monospace;">00:00:00</span>
+      <span id="nav-date"  class="text-[9px] uppercase tracking-[0.18em] text-outline-variant font-medium"></span>
+    </div>
+    <button onclick="showPage('profile')" class="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container hover:bg-surface-container-high transition-colors">
+      <span class="material-symbols-outlined text-on-surface" style="font-size:20px;">account_circle</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     HOME PAGE
+══════════════════════════════════════════ -->
+<div id="page-home" class="ihb-page">
+<main class="pt-20 pb-16">
+  <section class="max-w-screen-xl mx-auto px-6 mb-8 relative">
+    <div class="hero-gradient absolute inset-0 -z-10"></div>
+    <div class="max-w-2xl mx-auto text-center pt-12 pb-8">
+      <div class="mb-3 flex items-center justify-center gap-2">
+        <span class="inline-block w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+        <span class="text-[10px] uppercase tracking-[0.25em] text-secondary font-bold">The Collective Memory</span>
+      </div>
+      <h1 class="text-5xl font-black tracking-tighter text-on-surface mb-2 leading-[1.05]" style="text-wrap:balance;">Some moments<br><span class="text-secondary">keep counting.</span></h1>
+      <div class="h-6 flex items-center justify-center overflow-hidden mb-6 mt-3">
+        <p id="quote-text" class="text-[11px] italic text-outline-variant font-light tracking-wide max-w-md quote-in"></p>
+      </div>
+      <!-- Live global stats -->
+      <div class="inline-flex items-center gap-4 sm:gap-6 px-5 py-2.5 rounded-full mb-6 border border-outline-variant/15 bg-white/60 backdrop-blur-sm shadow-sm">
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-extrabold tracking-tight text-on-surface" id="stat-events">62</span>
+          <span class="text-[9px] uppercase tracking-[0.15em] text-outline-variant font-medium">moments</span>
+        </div>
+        <div class="w-px h-4 bg-outline-variant/20"></div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-extrabold tracking-tight text-on-surface font-mono" id="stat-seconds">—</span>
+          <span class="text-[9px] uppercase tracking-[0.15em] text-outline-variant font-medium">seconds since the oldest</span>
+        </div>
+      </div>
+      <div class="relative max-w-xl mx-auto">
+        <input id="search-input" class="w-full bg-white border border-outline-variant/20 px-5 py-3.5 rounded-2xl text-sm font-light placeholder:text-outline-variant focus:ring-2 focus:ring-secondary/20 focus:border-secondary/30 shadow-sm transition-all" placeholder="Search any moment in time…" type="text" autocomplete="off"/>
+        <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-outline-variant pointer-events-none">
+          <span class="text-[9px] font-mono border border-outline-variant/20 px-1.5 py-0.5 rounded hidden sm:block tracking-widest">⌘K</span>
+          <span class="material-symbols-outlined text-lg">travel_explore</span>
+        </div>
+      </div>
+      <div id="category-filters" class="flex flex-nowrap justify-center gap-2 mt-6">
+        <button data-cat="All"        class="pill pill-active px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap">All</button>
+        <button data-cat="Internet"   class="pill px-3.5 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-medium hover:bg-surface-container-highest transition-all whitespace-nowrap">Internet</button>
+        <button data-cat="Culture"    class="pill px-3.5 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-medium hover:bg-surface-container-highest transition-all whitespace-nowrap">Culture</button>
+        <button data-cat="Technology" class="pill px-3.5 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-medium hover:bg-surface-container-highest transition-all whitespace-nowrap">Tech</button>
+        <button data-cat="Space"      class="pill px-3.5 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-medium hover:bg-surface-container-highest transition-all whitespace-nowrap">Space</button>
+        <button data-cat="Science"    class="pill px-3.5 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-medium hover:bg-surface-container-highest transition-all whitespace-nowrap">Science</button>
+        <button data-cat="Politics"   class="pill px-3.5 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-medium hover:bg-surface-container-highest transition-all whitespace-nowrap">Politics</button>
+        <button data-cat="Disasters"  class="pill px-3.5 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-medium hover:bg-surface-container-highest transition-all whitespace-nowrap">Disasters</button>
+        <button data-cat="Firsts"     class="pill px-3.5 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-medium hover:bg-surface-container-highest transition-all whitespace-nowrap">Firsts</button>
+        <div class="w-px bg-outline-variant/30 mx-1 self-stretch shrink-0"></div>
+        <button data-cat="Community"  class="pill px-3.5 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-medium hover:bg-surface-container-highest transition-all whitespace-nowrap">Community</button>
+      </div>
+      <div id="subcat-filters" class="hidden flex flex-wrap justify-center gap-2 pt-2">
+        <button data-subcat="Culture,Sports,Music,Film & TV,Celebrity" class="subpill subpill-active px-3 py-1 rounded-full text-[11px] font-medium transition-all">All Culture</button>
+        <button data-subcat="Music"     class="subpill px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-medium hover:bg-surface-container-high transition-all">Music</button>
+        <button data-subcat="Sports"    class="subpill px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-medium hover:bg-surface-container-high transition-all">Sports</button>
+        <button data-subcat="Film & TV" class="subpill px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-medium hover:bg-surface-container-high transition-all">Film & TV</button>
+        <button data-subcat="Celebrity" class="subpill px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-medium hover:bg-surface-container-high transition-all">Celebrity</button>
+      </div>
+      <div id="community-subcat-filters" class="hidden flex-nowrap justify-center gap-2 pt-2 overflow-x-auto pb-1" style="scrollbar-width:none;">
+        <button data-commcat="All"          class="commpill commpill-active px-3 py-1 rounded-full text-[11px] font-medium transition-all shrink-0" style="background:#2d3338;color:#f9f9fb;">All</button>
+        <button data-commcat="Birth"        class="commpill px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-medium hover:bg-surface-container-high transition-all shrink-0">Birth</button>
+        <button data-commcat="Loss"         class="commpill px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-medium hover:bg-surface-container-high transition-all shrink-0">Loss</button>
+        <button data-commcat="Sobriety"     class="commpill px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-medium hover:bg-surface-container-high transition-all shrink-0">Sobriety</button>
+        <button data-commcat="Relationship" class="commpill px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-medium hover:bg-surface-container-high transition-all shrink-0">Relationship</button>
+        <button data-commcat="Company"      class="commpill px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-medium hover:bg-surface-container-high transition-all shrink-0">Company</button>
+        <button data-commcat="Achievement"  class="commpill px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-medium hover:bg-surface-container-high transition-all shrink-0">Achievement</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ON THIS DAY -->
+  <section id="otd-section" class="max-w-screen-xl mx-auto px-6 mb-10" style="display:none">
+    <div class="mb-3">
+      <span class="text-[9px] uppercase tracking-[0.2em] text-secondary font-bold">On This Day</span>
+      <h2 id="otd-heading" class="text-base font-extrabold tracking-tight text-on-surface"></h2>
+    </div>
+    <div id="otd-scroll" class="otd-scroll"></div>
+  </section>
+
+  <!-- HISTORIC MOMENTS -->
+  <section class="max-w-screen-xl mx-auto px-6">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <span id="grid-label" class="text-[9px] uppercase tracking-[0.2em] text-secondary font-bold">Curated</span>
+        <h2 id="grid-title" class="text-base font-extrabold tracking-tight text-on-surface">Historic Moments</h2>
+      </div>
+      <div class="flex items-center gap-4">
+        <span id="results-count" class="text-[10px] text-outline-variant uppercase tracking-widest"></span>
+        <button onclick="openSuggest()" class="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-secondary font-bold hover:opacity-70 transition-opacity border border-secondary/20 px-3 py-1.5 rounded-full hover:bg-secondary/5">
+          <span class="material-symbols-outlined" style="font-size:13px;">add_circle</span>Suggest a moment
+        </button>
+      </div>
+    </div>
+    <div id="empty-state" class="py-16 text-center">
+      <span class="material-symbols-outlined text-outline-variant text-4xl mb-3 block">search_off</span>
+      <p class="text-on-surface-variant text-sm">No moments found for "<span id="empty-query"></span>"</p>
+    </div>
+    <div id="events-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4"></div>
+  </section>
+
+  <!-- VALUE PROP STRIP -->
+  <section class="max-w-screen-xl mx-auto px-6 mt-14 mb-0">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-px bg-outline-variant/10 rounded-2xl overflow-hidden border border-outline-variant/10">
+      <div class="bg-surface-container-lowest px-7 py-7 flex items-start gap-4">
+        <span class="material-symbols-outlined text-secondary shrink-0 mt-0.5" style="font-size:20px;">schedule</span>
+        <div>
+          <p class="text-sm font-bold text-on-surface mb-1">Runs forever</p>
+          <p class="text-[11px] text-on-surface-variant font-light leading-relaxed">One payment. Your clock ticks for as long as the internet exists. No subscription, no expiry.</p>
+        </div>
+      </div>
+      <div class="bg-surface-container-lowest px-7 py-7 flex items-start gap-4">
+        <span class="material-symbols-outlined text-secondary shrink-0 mt-0.5" style="font-size:20px;">link</span>
+        <div>
+          <p class="text-sm font-bold text-on-surface mb-1">Your own URL</p>
+          <p class="text-[11px] text-on-surface-variant font-light leading-relaxed">Every moment gets a permanent shareable page at <span class="font-mono">ithasbeen.com/m/your-moment</span>.</p>
+        </div>
+      </div>
+      <div class="bg-surface-container-lowest px-7 py-7 flex items-start gap-4">
+        <span class="material-symbols-outlined text-secondary shrink-0 mt-0.5" style="font-size:20px;">photo_camera</span>
+        <div>
+          <p class="text-sm font-bold text-on-surface mb-1">Shareable card</p>
+          <p class="text-[11px] text-on-surface-variant font-light leading-relaxed">Generate a beautiful image card — square or story — ready for Instagram, X, or WhatsApp.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMUNITY -->
+
+  <section class="max-w-screen-xl mx-auto px-6 mt-14">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <span class="text-[9px] uppercase tracking-[0.2em] text-secondary font-bold">User Created</span>
+        <h2 class="text-base font-extrabold tracking-tight text-on-surface">Community Milestones</h2>
+      </div>
+      <a href="#" onclick="showPage('auth'); return false;" class="text-[10px] uppercase tracking-widest text-secondary font-semibold hover:opacity-70 transition-opacity">List yours →</a>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+      <button onclick="showPage('auth')" class="group overflow-hidden bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-lg transition-all border border-dashed border-outline-variant/40 flex flex-col items-center justify-center min-h-[220px] cursor-pointer">
+        <span class="material-symbols-outlined text-outline-variant text-2xl mb-2 group-hover:text-secondary transition-colors">add_circle</span>
+        <p class="text-[10px] uppercase tracking-widest text-outline-variant font-medium group-hover:text-secondary transition-colors">Create yours</p>
+      </button>
+    </div>
+  </section>
+</main>
+
+<!-- SUGGEST MODAL -->
+<div id="suggest-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4" style="display:none !important;">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeSuggest()"></div>
+  <div class="relative bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-2xl w-full max-w-md p-6 space-y-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-[9px] uppercase tracking-[0.2em] text-secondary font-bold">Community</p>
+        <h3 class="text-lg font-extrabold tracking-tight text-on-surface">Suggest a moment</h3>
+      </div>
+      <button onclick="closeSuggest()" class="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container hover:bg-surface-container-high transition-colors">
+        <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px;">close</span>
+      </button>
+    </div>
+    <div class="space-y-3">
+      <div class="space-y-1.5">
+        <label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Event title</label>
+        <input id="suggest-title" type="text" placeholder="e.g. Harambe Shot" class="w-full bg-surface-container-low border-none rounded-lg px-3 py-2.5 text-sm text-on-surface placeholder:text-outline-variant"/>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="space-y-1.5">
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Date</label>
+          <input id="suggest-date" type="date" class="w-full bg-surface-container-low border-none rounded-lg px-3 py-2.5 text-sm text-on-surface"/>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Category</label>
+          <select id="suggest-category" class="w-full bg-surface-container-low border-none rounded-lg px-3 py-2.5 text-sm text-on-surface">
+            <option value="">Pick one</option>
+            <option>Internet</option><option>Culture</option><option>Technology</option><option>Space</option><option>Science</option><option>Politics</option><option>Disasters</option><option>Firsts</option>
+          </select>
+        </div>
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">The hook</label>
+        <textarea id="suggest-hook" rows="2" placeholder="e.g. The meme that never died" class="w-full bg-surface-container-low border-none rounded-lg px-3 py-2.5 text-sm text-on-surface placeholder:text-outline-variant resize-none"></textarea>
+      </div>
+    </div>
+    <div id="suggest-success" class="hidden text-center py-4">
+      <span class="material-symbols-outlined text-secondary text-3xl mb-2 block">check_circle</span>
+      <p class="text-sm font-semibold text-on-surface">Thanks! We'll review your suggestion.</p>
+    </div>
+    <button onclick="submitSuggest()" id="suggest-btn" class="w-full py-2.5 bg-secondary text-white rounded-full text-sm font-semibold hover:opacity-90 transition-all">Submit suggestion</button>
+    <p class="text-[9px] text-center uppercase tracking-[0.15em] text-outline-variant">All suggestions are reviewed before going live</p>
+  </div>
+</div>
+
+<!-- STICKY BAR -->
+<div id="sticky-bar" class="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 shadow-2xl" style="background:#2d3338;">
+  <div class="max-w-screen-xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-4 min-w-0">
+      <div class="flex flex-col items-start">
+        <span class="text-[8px] uppercase tracking-[0.2em] font-medium leading-none mb-0.5" style="color:rgba(255,255,255,0.35);">You've been here for</span>
+        <div class="flex items-baseline gap-1.5">
+          <span id="bar-clock" class="text-base font-mono font-bold tracking-widest text-white">00:00:00</span>
+          <span class="text-[7px] uppercase tracking-widest" style="color:rgba(255,255,255,0.3);">and counting</span>
+        </div>
+      </div>
+      <div class="hidden sm:block w-px h-8" style="background:rgba(255,255,255,0.08)"></div>
+      <p class="hidden md:block text-xs font-light" style="color:rgba(255,255,255,0.35);">What moment defined <span class="italic text-white/60">your</span> life?</p>
+    </div>
+    <div class="shrink-0 flex items-center gap-3">
+      <div class="hidden lg:flex flex-col items-end">
+        <span class="text-[10px] font-bold text-white/80">One-time · runs forever</span>
+        <span class="text-[9px] text-white/35 uppercase tracking-widest">No subscription</span>
+      </div>
+      <button onclick="showPage('auth')" class="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full text-white text-sm font-bold hover:opacity-90 active:scale-95 transition-all" style="background:#005bc2;">
+        <span class="material-symbols-outlined text-white" style="font-size:15px;">add_circle</span>
+        <span class="hidden sm:inline">Start the clock</span>
+        <span class="sm:hidden">Create</span>
+        <span class="font-normal text-xs ml-1 opacity-60">—</span>
+        <span class="font-extrabold">$6</span>
+      </button>
+    </div>
+  </div>
+</div>
+<div class="h-16"></div>
+</div><!-- end page-home -->
+
+<!-- FOOTER -->
+<footer class="w-full py-10 px-6 bg-zinc-50 border-t border-outline-variant/10">
+  <div class="flex flex-col md:flex-row justify-between items-center w-full max-w-screen-xl mx-auto gap-6">
+    <div class="text-base font-bold text-zinc-900 italic">it has been</div>
+    <div class="flex gap-6">
+      <a class="text-zinc-500 hover:text-zinc-900 text-[11px] uppercase tracking-[0.05em]" href="#">Terms</a>
+      <a class="text-zinc-500 hover:text-zinc-900 text-[11px] uppercase tracking-[0.05em]" href="#">Privacy</a>
+      <a class="text-zinc-500 hover:text-zinc-900 text-[11px] uppercase tracking-[0.05em]" href="#">Ethics</a>
+    </div>
+    <div class="text-zinc-600 text-[11px] uppercase tracking-[0.05em]">© 2025 it has been. All rights reserved.</div>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════════════
+     AUTH PAGE
+══════════════════════════════════════════ -->
+<div id="page-auth" class="ihb-page">
+  <div class="flex items-center justify-center pt-28 pb-16 px-4 min-h-screen" style="background:radial-gradient(ellipse at 60% 0%,rgba(216,226,255,0.5) 0%,rgba(249,249,251,0) 65%)">
+    <div class="w-full max-w-sm">
+      <div class="mb-8 text-center">
+        <p class="text-[9px] uppercase tracking-[0.25em] text-secondary font-bold mb-1">The Collective Memory</p>
+        <h1 class="text-3xl font-extrabold tracking-tighter text-on-surface">it has been</h1>
+      </div>
+      <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm overflow-hidden">
+        <div class="relative flex border-b border-outline-variant/10">
+          <button onclick="switchTab('login')" id="tab-login" class="flex-1 py-3.5 text-xs font-semibold uppercase tracking-widest text-secondary transition-colors">Sign in</button>
+          <button onclick="switchTab('register')" id="tab-register" class="flex-1 py-3.5 text-xs font-semibold uppercase tracking-widest text-on-surface-variant hover:text-on-surface transition-colors">Register</button>
+          <div id="tab-line" class="absolute bottom-0 left-0 h-0.5 bg-secondary w-1/2" style="transition:transform 0.25s cubic-bezier(.4,0,.2,1)"></div>
+        </div>
+        <div id="form-login" class="p-6 space-y-4">
+          <div class="space-y-1.5">
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Email</label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant" style="font-size:16px;">mail</span>
+              <input type="email" placeholder="you@example.com" class="w-full bg-surface-container-low border-none rounded-lg pl-9 pr-4 py-2.5 text-sm text-on-surface placeholder:text-outline-variant"/>
+            </div>
+          </div>
+          <div class="space-y-1.5">
+            <div class="flex justify-between items-center">
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Password</label>
+              <a href="#" class="text-[10px] text-secondary hover:underline">Forgot?</a>
+            </div>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant" style="font-size:16px;">lock</span>
+              <input id="login-pw" type="password" placeholder="••••••••" class="w-full bg-surface-container-low border-none rounded-lg pl-9 pr-10 py-2.5 text-sm text-on-surface placeholder:text-outline-variant"/>
+              <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline-variant hover:text-on-surface cursor-pointer" style="font-size:16px;" onclick="togglePw('login-pw',this)">visibility_off</span>
+            </div>
+          </div>
+          <button onclick="showPage('create')" class="w-full py-2.5 bg-secondary text-white rounded-full text-sm font-semibold hover:opacity-90 transition-all">Sign in</button>
+          <div style="display:flex;align-items:center;gap:12px;color:#acb3b8;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:500"><div style="flex:1;height:1px;background:#e4e9ee"></div>or<div style="flex:1;height:1px;background:#e4e9ee"></div></div>
+          <button onclick="showPage('create')" class="w-full py-2.5 bg-surface-container-low rounded-full text-sm font-medium text-on-surface hover:bg-surface-container-high transition-all flex items-center justify-center gap-2 border border-outline-variant/20">
+            <svg width="15" height="15" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Continue with Google
+          </button>
+        </div>
+        <div id="form-register" class="p-6 space-y-4 hidden">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1.5"><label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">First name</label><input type="text" placeholder="Ada" class="w-full bg-surface-container-low border-none rounded-lg px-3 py-2.5 text-sm text-on-surface placeholder:text-outline-variant"/></div>
+            <div class="space-y-1.5"><label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Last name</label><input type="text" placeholder="Lovelace" class="w-full bg-surface-container-low border-none rounded-lg px-3 py-2.5 text-sm text-on-surface placeholder:text-outline-variant"/></div>
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Email</label>
+            <div class="relative"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant" style="font-size:16px;">mail</span><input type="email" placeholder="you@example.com" class="w-full bg-surface-container-low border-none rounded-lg pl-9 pr-4 py-2.5 text-sm text-on-surface placeholder:text-outline-variant"/></div>
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Password</label>
+            <div class="relative"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant" style="font-size:16px;">lock</span><input id="reg-pw" type="password" placeholder="Min. 8 characters" class="w-full bg-surface-container-low border-none rounded-lg pl-9 pr-10 py-2.5 text-sm text-on-surface placeholder:text-outline-variant"/><span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline-variant hover:text-on-surface cursor-pointer" style="font-size:16px;" onclick="togglePw('reg-pw',this)">visibility_off</span></div>
+            <div class="flex gap-1 pt-1"><div class="h-0.5 flex-1 rounded-full bg-surface-container-high" id="bar1"></div><div class="h-0.5 flex-1 rounded-full bg-surface-container-high" id="bar2"></div><div class="h-0.5 flex-1 rounded-full bg-surface-container-high" id="bar3"></div><div class="h-0.5 flex-1 rounded-full bg-surface-container-high" id="bar4"></div></div>
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Confirm password</label>
+            <div class="relative"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant" style="font-size:16px;">lock</span><input type="password" placeholder="Repeat password" class="w-full bg-surface-container-low border-none rounded-lg pl-9 pr-10 py-2.5 text-sm text-on-surface placeholder:text-outline-variant"/></div>
+          </div>
+          <div class="flex items-start gap-2.5 pt-1">
+            <input type="checkbox" class="mt-0.5 rounded border-outline-variant accent-secondary w-3.5 h-3.5 shrink-0"/>
+            <label class="text-[11px] text-on-surface-variant leading-relaxed">I agree to the <a href="#" class="text-secondary hover:underline">Terms of Service</a> and <a href="#" class="text-secondary hover:underline">Privacy Policy</a></label>
+          </div>
+          <button onclick="showPage('create')" class="w-full py-2.5 bg-secondary text-white rounded-full text-sm font-semibold hover:opacity-90 transition-all">Create account</button>
+          <div style="display:flex;align-items:center;gap:12px;color:#acb3b8;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:500"><div style="flex:1;height:1px;background:#e4e9ee"></div>or<div style="flex:1;height:1px;background:#e4e9ee"></div></div>
+          <button onclick="showPage('create')" class="w-full py-2.5 bg-surface-container-low rounded-full text-sm font-medium text-on-surface hover:bg-surface-container-high transition-all flex items-center justify-center gap-2 border border-outline-variant/20">
+            <svg width="15" height="15" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Continue with Google
+          </button>
+        </div>
+      </div>
+      <p class="text-center text-[10px] text-outline-variant mt-5 uppercase tracking-[0.15em]">Your moments. Your memory. Always yours.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     CREATE PAGE
+══════════════════════════════════════════ -->
+<div id="page-create" class="ihb-page">
+<main class="pt-20 pb-24">
+  <div class="max-w-screen-lg mx-auto px-6">
+    <div class="pt-10 pb-8">
+      <span class="text-[9px] uppercase tracking-[0.2em] text-secondary font-bold">New Milestone</span>
+      <h1 class="text-3xl font-extrabold tracking-tighter text-on-surface mt-0.5">Create your moment</h1>
+      <p class="text-on-surface-variant text-sm font-light mt-1">A clock that ticks forever. Starting from the moment that changed everything.</p>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
+      <div class="space-y-6">
+        <div class="space-y-1.5">
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Title of your moment</label>
+          <input id="f-title" type="text" maxlength="60" placeholder="e.g. The day I got sober · Our wedding day · Company founded" class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-3 text-sm text-on-surface placeholder:text-outline-variant transition-all" oninput="updatePreview()"/>
+          <div class="flex justify-end"><span id="title-count" class="text-[9px] text-outline-variant">0 / 60</span></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Date</label>
+            <input id="f-date" type="date" class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-3 text-sm text-on-surface transition-all" oninput="updatePreview()"/>
+          </div>
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2"><label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Time</label><span class="text-[8px] uppercase tracking-widest text-outline-variant bg-surface-container px-1.5 py-0.5 rounded font-medium">Optional</span></div>
+            <input id="f-time" type="time" class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-3 text-sm text-on-surface transition-all" oninput="updatePreview()"/>
+          </div>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Category</label>
+          <select id="f-category" class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-3 text-sm text-on-surface transition-all" onchange="updatePreview()">
+            <option value="">Select a category</option>
+            <option>Internet</option><option>Culture</option><option>Technology</option><option>Space</option><option>Science</option><option>Politics</option><option>Disasters</option><option>Firsts</option><option>Personal</option><option>Business</option><option>Anniversary</option><option>Achievement</option><option>Remembrance</option>
+          </select>
+        </div>
+        <div class="space-y-1.5">
+          <div class="flex items-center gap-2"><label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">The hook</label><span class="text-[8px] uppercase tracking-widest text-outline-variant bg-surface-container px-1.5 py-0.5 rounded font-medium">Optional</span></div>
+          <textarea id="f-hook" rows="2" maxlength="120" placeholder="One line that captures why this moment matters" class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-3 text-sm text-on-surface placeholder:text-outline-variant transition-all resize-none" oninput="updatePreview()"></textarea>
+          <div class="flex justify-end"><span id="hook-count" class="text-[9px] text-outline-variant">0 / 120</span></div>
+        </div>
+        <div class="space-y-1.5">
+          <div class="flex items-center gap-2"><label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Cover image</label><span class="text-[8px] uppercase tracking-widest text-outline-variant bg-surface-container px-1.5 py-0.5 rounded font-medium">Optional</span></div>
+          <div id="drop-zone" class="border-2 border-dashed border-outline-variant/30 rounded-xl p-8 text-center cursor-pointer hover:border-secondary/40 transition-all" onclick="document.getElementById('f-image').click()" ondragover="event.preventDefault();this.style.borderColor='#005bc2'" ondragleave="this.style.borderColor=''" ondrop="handleDrop(event)">
+            <span class="material-symbols-outlined text-outline-variant text-3xl mb-2 block">add_photo_alternate</span>
+            <p class="text-sm text-on-surface-variant font-medium">Drop an image or click to upload</p>
+            <p class="text-[10px] text-outline-variant mt-1">JPG, PNG, WEBP · Max 5MB</p>
+          </div>
+          <input id="f-image" type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event)"/>
+          <div id="image-preview-wrap" class="hidden relative rounded-xl overflow-hidden" style="aspect-ratio:16/7">
+            <img id="image-preview" class="w-full h-full object-cover grayscale"/>
+            <button onclick="removeImage()" class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"><span class="material-symbols-outlined text-white" style="font-size:14px;">close</span></button>
+          </div>
+        </div>
+        <div class="border-t border-outline-variant/15 pt-6 space-y-3">
+          <div><label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Visibility</label><p class="text-[10px] text-outline-variant mt-0.5">Who can see your moment?</p></div>
+          <div class="space-y-2">
+            <div class="vis-opt selected flex items-start gap-3 p-3.5 rounded-xl border border-outline-variant/20 bg-surface-container-lowest cursor-pointer" onclick="selectVis('private',this)">
+              <div class="vdot mt-0.5" style="width:14px;height:14px;border-radius:50%;border:2px solid #005bc2;background:#005bc2;flex-shrink:0"></div>
+              <div><div class="flex items-center gap-2"><span class="text-sm font-semibold text-on-surface">Private</span><span class="material-symbols-outlined text-outline-variant" style="font-size:14px;">lock</span></div><p class="text-[11px] text-on-surface-variant font-light mt-0.5">Only visible to you</p></div>
+            </div>
+            <div class="vis-opt flex items-start gap-3 p-3.5 rounded-xl border border-outline-variant/20 bg-surface-container-lowest cursor-pointer" onclick="selectVis('unlisted',this)">
+              <div class="vdot mt-0.5" style="width:14px;height:14px;border-radius:50%;border:2px solid #acb3b8;flex-shrink:0"></div>
+              <div><div class="flex items-center gap-2"><span class="text-sm font-semibold text-on-surface">Unlisted</span><span class="material-symbols-outlined text-outline-variant" style="font-size:14px;">link</span></div><p class="text-[11px] text-on-surface-variant font-light mt-0.5">Anyone with the link</p></div>
+            </div>
+            <div class="vis-opt flex items-start gap-3 p-3.5 rounded-xl border border-outline-variant/20 bg-surface-container-lowest cursor-pointer" onclick="selectVis('public',this)">
+              <div class="vdot mt-0.5" style="width:14px;height:14px;border-radius:50%;border:2px solid #acb3b8;flex-shrink:0"></div>
+              <div><div class="flex items-center gap-2"><span class="text-sm font-semibold text-on-surface">Public</span><span class="material-symbols-outlined text-outline-variant" style="font-size:14px;">public</span></div><p class="text-[11px] text-on-surface-variant font-light mt-0.5">Visible to everyone</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="border-t border-outline-variant/15 pt-6">
+          <div id="listing-box" class="rounded-xl border border-outline-variant/20 bg-surface-container-lowest overflow-hidden cursor-pointer" onclick="toggleListing()">
+            <div class="p-4 flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div id="listing-check" class="w-5 h-5 rounded border-2 border-outline-variant/40 flex items-center justify-center transition-all"></div>
+                <div><div class="flex items-center gap-2"><span class="text-sm font-semibold text-on-surface">List in Community Gallery</span><span style="background:#005bc2;color:white;border-radius:999px;font-weight:700;font-size:11px;padding:2px 10px">+$4</span></div><p class="text-[11px] text-on-surface-variant font-light mt-0.5">Appears on the home page</p></div>
+              </div>
+              <span class="material-symbols-outlined text-outline-variant shrink-0" style="font-size:18px;">storefront</span>
+            </div>
+            <div id="listing-detail" class="hidden px-4 pb-4 border-t border-outline-variant/10 pt-3">
+              <div class="grid grid-cols-3 gap-3 text-center">
+                <div class="bg-surface-container rounded-lg p-2.5"><span class="material-symbols-outlined text-secondary block mb-1" style="font-size:16px;">visibility</span><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-medium">Public reach</p></div>
+                <div class="bg-surface-container rounded-lg p-2.5"><span class="material-symbols-outlined text-secondary block mb-1" style="font-size:16px;">trending_up</span><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-medium">On This Day</p></div>
+                <div class="bg-surface-container rounded-lg p-2.5"><span class="material-symbols-outlined text-secondary block mb-1" style="font-size:16px;">share</span><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-medium">Shareable URL</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="border-t border-outline-variant/15 pt-6">
+          <div class="bg-on-surface rounded-2xl overflow-hidden">
+            <div class="px-5 pt-5 pb-4 space-y-2.5">
+              <p class="text-[10px] uppercase tracking-widest text-white/40 font-medium">Order summary</p>
+              <div class="flex items-center justify-between"><span class="text-sm text-white/70">Moment + shareable URL</span><span class="text-sm font-semibold text-white">$6</span></div>
+              <div id="listing-line" class="hidden flex items-center justify-between"><span class="text-sm text-white/70">Community gallery listing</span><span class="text-sm font-semibold text-white">$4</span></div>
+              <div class="border-t border-white/10 pt-2.5 flex items-center justify-between">
+                <span class="text-sm font-bold text-white">Total</span>
+                <div class="text-right">
+                  <span id="total-price" class="text-2xl font-extrabold tracking-tight text-white">$6</span>
+                  <p class="text-[9px] uppercase tracking-widest text-white/25 -mt-0.5">one-time · no subscription</p>
+                </div>
+              </div>
+            </div>
+            <div class="px-5 pb-5">
+              <button onclick="handleSubmit()" class="w-full py-3.5 bg-secondary text-white rounded-full text-sm font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-white" style="font-size:16px;">lock</span>Pay &amp; start the clock — forever
+              </button>
+              <div class="mt-4 grid grid-cols-3 gap-3 text-center">
+                <div><span class="material-symbols-outlined text-white/30 block mb-1" style="font-size:16px;">schedule</span><p class="text-[9px] uppercase tracking-widest text-white/30">Runs forever</p></div>
+                <div><span class="material-symbols-outlined text-white/30 block mb-1" style="font-size:16px;">link</span><p class="text-[9px] uppercase tracking-widest text-white/30">Your own URL</p></div>
+                <div><span class="material-symbols-outlined text-white/30 block mb-1" style="font-size:16px;">photo_camera</span><p class="text-[9px] uppercase tracking-widest text-white/30">Share card</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Preview -->
+      <div class="lg:sticky lg:top-24">
+        <p class="text-[9px] uppercase tracking-[0.2em] text-secondary font-bold mb-3">Live preview</p>
+        <div class="bg-surface-container-lowest rounded-xl shadow-md border border-outline-variant/10 overflow-hidden max-w-[260px] mx-auto">
+          <div class="overflow-hidden relative" style="aspect-ratio:4/3">
+            <div id="prev-placeholder" class="w-full h-full flex items-end p-3" style="background:linear-gradient(135deg,#1a1a2e,#0f3460)">
+              <p id="prev-hook-ov" class="text-white/40 text-[8px] uppercase tracking-widest font-medium leading-tight" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden"></p>
+            </div>
+            <img id="prev-img" class="w-full h-full object-cover grayscale hidden absolute inset-0"/>
+          </div>
+          <div class="p-4 flex flex-col gap-3">
+            <div><span id="prev-cat" class="text-[8px] uppercase tracking-[0.2em] text-secondary font-bold block mb-0.5">Category</span><h3 id="prev-title" class="text-sm font-bold tracking-tight truncate text-outline-variant italic">Your moment title</h3></div>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="flex flex-col"><span id="prev-years" class="text-xl font-extrabold tracking-tighter text-on-surface">—</span><span class="text-[7px] uppercase tracking-widest text-on-surface-variant font-medium">Years</span></div>
+              <div class="flex flex-col"><span id="prev-days" class="text-xl font-extrabold tracking-tighter text-on-surface">—</span><span class="text-[7px] uppercase tracking-widest text-on-surface-variant font-medium">Days</span></div>
+            </div>
+            <div class="pt-2 border-t border-surface-container">
+              <div class="flex justify-between items-center">
+                <div class="flex items-baseline gap-1"><span id="prev-clock" class="text-sm font-mono font-medium text-secondary">00:00:00</span><span class="text-[6px] uppercase tracking-widest text-on-surface-variant">H:M:S</span></div>
+                <span class="material-symbols-outlined text-secondary/30 text-sm">history</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-3 flex items-center justify-center gap-1.5">
+          <span id="prev-vis-icon" class="material-symbols-outlined text-outline-variant" style="font-size:13px;">lock</span>
+          <span id="prev-vis-label" class="text-[9px] uppercase tracking-widest text-outline-variant font-medium">Private</span>
+        </div>
+        <div class="mt-3 bg-surface-container rounded-lg px-3 py-2 flex items-center gap-2">
+          <span class="material-symbols-outlined text-outline-variant" style="font-size:13px;">link</span>
+          <span id="prev-url" class="text-[10px] text-outline-variant font-mono truncate">ithasbeen.com/m/your-moment</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PROFILE PAGE
+══════════════════════════════════════════ -->
+<div id="page-profile" class="ihb-page">
+<main class="pt-20 pb-24 min-h-screen">
+  <div class="max-w-screen-xl mx-auto px-6">
+    <div class="pt-10 pb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center">
+          <span class="material-symbols-outlined text-on-surface-variant" style="font-size:28px;">account_circle</span>
+        </div>
+        <div><h1 class="text-xl font-extrabold tracking-tighter text-on-surface">Your Profile</h1><p class="text-sm text-on-surface-variant font-light"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d7aeb8a297b2afb6baa7bbb2f9b4b8ba">[email&#160;protected]</a></p></div>
+      </div>
+      <button onclick="showPage('create')" class="flex items-center gap-2 px-5 py-2.5 bg-secondary text-white rounded-full text-sm font-semibold hover:opacity-90 transition-all">
+        <span class="material-symbols-outlined text-white" style="font-size:15px;">add_circle</span>New moment · $6
+      </button>
+    </div>
+    <div class="flex gap-0 border-b border-outline-variant/15 mb-8">
+      <button onclick="switchProfileTab('moments')" id="ptab-moments" class="px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-secondary border-b-2 border-secondary -mb-px">My Moments</button>
+      <button onclick="switchProfileTab('saved')" id="ptab-saved" class="px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-on-surface-variant hover:text-on-surface border-b-2 border-transparent -mb-px">Saved</button>
+      <button onclick="switchProfileTab('settings')" id="ptab-settings" class="px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-on-surface-variant hover:text-on-surface border-b-2 border-transparent -mb-px">Settings</button>
+    </div>
+    <div id="profile-tab-moments">
+      <div class="grid grid-cols-3 gap-4 mb-8">
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 p-4 text-center"><span class="text-2xl font-extrabold tracking-tighter text-on-surface">3</span><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-medium mt-0.5">Moments</p></div>
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 p-4 text-center"><span class="text-2xl font-extrabold tracking-tighter text-on-surface">1</span><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-medium mt-0.5">Listed</p></div>
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 p-4 text-center"><span class="text-2xl font-extrabold tracking-tighter text-on-surface">247</span><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-medium mt-0.5">Views</p></div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <!-- Sample profile cards -->
+        <div class="group bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col relative cursor-pointer" onclick="openMomentPage('My sobriety date','Personal','The day that changed everything','2021-03-15')">
+          <div class="aspect-[4/3]" style="background:linear-gradient(135deg,#1a2020,#0d2a2a);display:flex;align-items:flex-end;padding:12px"><p class="text-white/40 text-[8px] uppercase tracking-widest font-medium">The day that changed everything</p></div>
+          <div class="p-4 flex-1 flex flex-col">
+            <div class="flex items-center justify-between mb-1"><span class="text-[8px] uppercase tracking-[0.2em] text-secondary font-bold">Personal</span><span class="flex items-center gap-1 text-[8px] uppercase tracking-widest text-green-600 font-semibold bg-green-50 px-1.5 py-0.5 rounded-full"><span class="material-symbols-outlined" style="font-size:10px;">public</span>Listed</span></div>
+            <h3 class="text-sm font-bold tracking-tight text-on-surface mb-3">My sobriety date</h3>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+              <div><span class="text-xl font-extrabold tracking-tighter text-on-surface pf-years" data-date="2021-03-15">—</span><p class="text-[7px] uppercase tracking-widest text-on-surface-variant font-medium">Years</p></div>
+              <div><span class="text-xl font-extrabold tracking-tighter text-on-surface pf-days" data-date="2021-03-15">—</span><p class="text-[7px] uppercase tracking-widest text-on-surface-variant font-medium">Days</p></div>
+            </div>
+            <div class="mt-auto pt-2 border-t border-surface-container flex justify-between items-center">
+              <span class="text-sm font-mono font-medium text-secondary pf-clock" data-date="2021-03-15">00:00:00</span>
+              <span class="text-[6px] uppercase tracking-widest text-on-surface-variant">H:M:S</span>
+            </div>
+          </div>
+          <div class="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onclick="event.stopPropagation();openCardModal('My sobriety date','Personal','The day that changed everything','2021-03-15')" class="w-7 h-7 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-md hover:bg-white shadow-sm transition-colors" title="Share card"><span class="material-symbols-outlined text-[14px]" style="font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 16;">share</span></button>
+            <button onclick="event.stopPropagation()" class="w-7 h-7 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-md hover:bg-white shadow-sm transition-colors"><span class="material-symbols-outlined text-[14px]" style="font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 16;">edit</span></button>
+          </div>
+        </div>
+        <div class="group bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col relative cursor-pointer" onclick="openMomentPage('Our first date','Anniversary','Two hearts, one clock','2019-06-14')">
+          <div class="aspect-[4/3]" style="background:linear-gradient(135deg,#1a0a1a,#2a1a2e);display:flex;align-items:flex-end;padding:12px"><p class="text-white/40 text-[8px] uppercase tracking-widest font-medium">Two hearts, one clock</p></div>
+          <div class="p-4 flex-1 flex flex-col">
+            <div class="flex items-center justify-between mb-1"><span class="text-[8px] uppercase tracking-[0.2em] text-secondary font-bold">Anniversary</span><span class="flex items-center gap-1 text-[8px] uppercase tracking-widest text-outline-variant font-semibold bg-surface-container px-1.5 py-0.5 rounded-full"><span class="material-symbols-outlined" style="font-size:10px;">link</span>Unlisted</span></div>
+            <h3 class="text-sm font-bold tracking-tight text-on-surface mb-3">Our first date</h3>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+              <div><span class="text-xl font-extrabold tracking-tighter text-on-surface pf-years" data-date="2019-06-14">—</span><p class="text-[7px] uppercase tracking-widest text-on-surface-variant font-medium">Years</p></div>
+              <div><span class="text-xl font-extrabold tracking-tighter text-on-surface pf-days" data-date="2019-06-14">—</span><p class="text-[7px] uppercase tracking-widest text-on-surface-variant font-medium">Days</p></div>
+            </div>
+            <div class="mt-auto pt-2 border-t border-surface-container flex justify-between items-center">
+              <span class="text-sm font-mono font-medium text-secondary pf-clock" data-date="2019-06-14">00:00:00</span>
+              <span class="text-[6px] uppercase tracking-widest text-on-surface-variant">H:M:S</span>
+            </div>
+          </div>
+          <div class="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onclick="event.stopPropagation();openCardModal('Our first date','Anniversary','Two hearts, one clock','2019-06-14')" class="w-7 h-7 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-md hover:bg-white shadow-sm transition-colors"><span class="material-symbols-outlined text-[14px]" style="font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 16;">share</span></button>
+            <button onclick="event.stopPropagation()" class="w-7 h-7 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-md hover:bg-white shadow-sm transition-colors"><span class="material-symbols-outlined text-[14px]" style="font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 16;">edit</span></button>
+          </div>
+        </div>
+        <button onclick="showPage('create')" class="group border-2 border-dashed border-outline-variant/30 rounded-xl hover:border-secondary/40 transition-all flex flex-col items-center justify-center min-h-[220px] gap-2 cursor-pointer">
+          <span class="material-symbols-outlined text-outline-variant text-2xl group-hover:text-secondary transition-colors">add_circle</span>
+          <p class="text-[10px] uppercase tracking-widest text-outline-variant font-medium group-hover:text-secondary transition-colors">New moment</p>
+          <span class="text-[9px] text-outline-variant font-light">$6</span>
+        </button>
+      </div>
+    </div>
+    <div id="profile-tab-saved" class="hidden py-16 text-center">
+      <span class="material-symbols-outlined text-outline-variant text-4xl mb-3 block">bookmark</span>
+      <p class="text-on-surface font-semibold text-sm mb-1">No saved moments yet</p>
+      <button onclick="showPage('home')" class="mt-4 px-5 py-2 bg-secondary text-white rounded-full text-xs font-semibold hover:opacity-90 transition-all">Browse moments</button>
+    </div>
+    <div id="profile-tab-settings" class="hidden max-w-lg space-y-6">
+      <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 overflow-hidden">
+        <div class="px-5 py-4 border-b border-outline-variant/10"><p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Account</p></div>
+        <div class="p-5 space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-1.5"><label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">First name</label><input type="text" value="Ada" class="w-full bg-surface-container-low border-none rounded-lg px-3 py-2.5 text-sm text-on-surface"/></div>
+            <div class="space-y-1.5"><label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Last name</label><input type="text" value="Lovelace" class="w-full bg-surface-container-low border-none rounded-lg px-3 py-2.5 text-sm text-on-surface"/></div>
+          </div>
+          <button class="px-5 py-2 bg-secondary text-white rounded-full text-xs font-semibold hover:opacity-90 transition-all">Save changes</button>
+        </div>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl border border-red-100 overflow-hidden">
+        <div class="px-5 py-4 border-b border-red-100"><p class="text-[10px] uppercase tracking-widest text-red-400 font-medium">Danger zone</p></div>
+        <div class="p-5 flex items-center justify-between">
+          <div><p class="text-sm font-medium text-on-surface">Delete account</p><p class="text-[10px] text-on-surface-variant font-light">All your moments will be permanently deleted</p></div>
+          <button class="px-4 py-2 border border-red-200 text-red-400 rounded-full text-xs font-semibold hover:bg-red-50 transition-all">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PUBLIC MOMENT PAGE
+══════════════════════════════════════════ -->
+<div id="page-moment" class="ihb-page">
+<div class="pt-14">
+
+  <!-- HERO — dark, full bleed -->
+  <div class="moment-hero grain relative min-h-[70vh] flex flex-col items-center justify-center px-6 py-20">
+    <img id="moment-hero-img" class="moment-hero-img hidden" alt=""/>
+
+    <div class="relative z-10 text-center max-w-3xl mx-auto">
+      <!-- Category + label -->
+      <div class="fade-up flex items-center justify-center gap-2 mb-6">
+        <span id="moment-category-badge" class="text-[9px] uppercase tracking-[0.25em] font-bold px-3 py-1 rounded-full" style="background:rgba(0,91,194,0.25);color:#6ba3ff;">Internet</span>
+        <span class="text-[9px] uppercase tracking-[0.2em] text-white/30 font-medium">ithasbeen.com</span>
+      </div>
+
+      <!-- Title -->
+      <h1 id="moment-title-display" class="fade-up fade-up-1 text-3xl sm:text-5xl font-extrabold tracking-tighter text-white leading-tight mb-4">Moment Title</h1>
+
+      <!-- Hook -->
+      <p id="moment-hook-display" class="fade-up fade-up-2 text-base text-white/50 font-light italic max-w-xl mx-auto mb-12 leading-relaxed"></p>
+
+      <!-- BIG CLOCK -->
+      <div class="fade-up fade-up-2 mb-4">
+        <div class="moment-clock text-6xl sm:text-8xl font-black text-white tracking-tighter tabular-nums" id="moment-big-clock">00:00:00</div>
+        <p class="text-[9px] uppercase tracking-[0.3em] text-white/25 font-medium mt-2">Hours · Minutes · Seconds</p>
+      </div>
+
+      <!-- Years / Days -->
+      <div class="fade-up fade-up-3 flex items-center justify-center gap-8 sm:gap-16 mt-8">
+        <div class="text-center">
+          <div id="moment-years-display" class="text-4xl sm:text-5xl font-extrabold text-white tracking-tighter">—</div>
+          <div class="text-[8px] uppercase tracking-[0.25em] text-white/30 font-medium mt-1">Years</div>
+        </div>
+        <div class="w-px h-10" style="background:rgba(255,255,255,0.08)"></div>
+        <div class="text-center">
+          <div id="moment-days-display" class="text-4xl sm:text-5xl font-extrabold text-white tracking-tighter">—</div>
+          <div class="text-[8px] uppercase tracking-[0.25em] text-white/30 font-medium mt-1">Days</div>
+        </div>
+        <div class="w-px h-10" style="background:rgba(255,255,255,0.08)"></div>
+        <div class="text-center">
+          <div id="moment-date-display" class="text-lg sm:text-xl font-semibold text-white/70 tracking-tight">—</div>
+          <div class="text-[8px] uppercase tracking-[0.25em] text-white/30 font-medium mt-1">Date</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHARE + ACTIONS BAR -->
+  <div class="bg-white border-b border-outline-variant/10 sticky top-14 z-40">
+    <div class="max-w-screen-md mx-auto px-6 py-3 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="material-symbols-outlined text-outline-variant" style="font-size:13px;">link</span>
+        <span id="moment-url-display" class="text-[10px] text-outline-variant font-mono truncate">ithasbeen.com/m/moment</span>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <!-- Copy link -->
+        <button onclick="copyMomentLink()" class="share-btn flex items-center gap-1.5 px-3 py-1.5 bg-surface-container rounded-full text-[11px] font-medium text-on-surface hover:bg-surface-container-high transition-all">
+          <span class="material-symbols-outlined" style="font-size:14px;">link</span>
+          <span class="hidden sm:inline">Copy link</span>
+        </button>
+        <!-- Share card -->
+        <button onclick="openCardModalFromMoment()" class="share-btn flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-white rounded-full text-[11px] font-semibold hover:opacity-90 transition-all">
+          <span class="material-symbols-outlined" style="font-size:14px;">photo_camera</span>
+          <span>Share card</span>
+        </button>
+        <!-- Favourite -->
+        <button id="fav-btn" onclick="toggleFav()" class="share-btn w-8 h-8 flex items-center justify-center rounded-full bg-surface-container hover:bg-surface-container-high transition-all">
+          <span class="material-symbols-outlined text-outline-variant" style="font-size:16px;" id="fav-icon">favorite</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Copy toast -->
+  <div id="copy-toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[200] bg-on-surface text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg">Link copied!</div>
+
+  <!-- BODY CONTENT -->
+  <div class="max-w-screen-md mx-auto px-6 py-12 space-y-12">
+
+    <!-- Creator -->
+    <div class="fade-up flex items-center gap-3">
+      <div class="w-9 h-9 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+        <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px;">account_circle</span>
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-on-surface">Created by <span id="moment-creator" class="text-secondary">Anonymous</span></p>
+        <p id="moment-created-at" class="text-[10px] text-outline-variant">Added to the collective memory</p>
+      </div>
+    </div>
+
+    <!-- What this means -->
+    <div class="fade-up fade-up-1">
+      <span class="text-[9px] uppercase tracking-[0.2em] text-secondary font-bold block mb-3">Context</span>
+      <p id="moment-context-text" class="text-on-surface-variant text-sm font-light leading-relaxed"></p>
+    </div>
+
+    <!-- Time breakdown -->
+    <div class="fade-up fade-up-2">
+      <span class="text-[9px] uppercase tracking-[0.2em] text-secondary font-bold block mb-4">It has been exactly</span>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 p-4 text-center">
+          <div id="breakdown-years" class="text-2xl font-extrabold tracking-tighter text-on-surface">—</div>
+          <div class="text-[8px] uppercase tracking-widest text-on-surface-variant font-medium mt-0.5">Years</div>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 p-4 text-center">
+          <div id="breakdown-days" class="text-2xl font-extrabold tracking-tighter text-on-surface">—</div>
+          <div class="text-[8px] uppercase tracking-widest text-on-surface-variant font-medium mt-0.5">Days</div>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 p-4 text-center">
+          <div id="breakdown-hours" class="text-2xl font-extrabold tracking-tighter text-on-surface">—</div>
+          <div class="text-[8px] uppercase tracking-widest text-on-surface-variant font-medium mt-0.5">Hours</div>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 p-4 text-center">
+          <div id="breakdown-mins" class="text-2xl font-extrabold tracking-tighter text-on-surface">—</div>
+          <div class="text-[8px] uppercase tracking-widest text-on-surface-variant font-medium mt-0.5">Minutes</div>
+        </div>
+      </div>
+      <!-- Total seconds ticker -->
+      <div class="mt-3 bg-on-surface rounded-xl px-5 py-3 flex items-center justify-between">
+        <span class="text-[9px] uppercase tracking-[0.2em] text-white/40 font-medium">Total seconds elapsed</span>
+        <span id="breakdown-seconds" class="text-lg font-mono font-bold text-white tabular-nums">—</span>
+      </div>
+    </div>
+
+    <!-- Related moments -->
+    <div class="fade-up fade-up-3" id="related-section">
+      <span class="text-[9px] uppercase tracking-[0.2em] text-secondary font-bold block mb-4">From the same era</span>
+      <div id="related-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+    </div>
+
+    <!-- CTA -->
+    <div class="fade-up fade-up-4 bg-on-surface rounded-2xl p-8 text-center">
+      <p class="text-[9px] uppercase tracking-[0.2em] text-white/40 font-bold mb-2">Your turn</p>
+      <h3 class="text-xl font-extrabold tracking-tighter text-white mb-2">What moment defines you?</h3>
+      <p class="text-sm text-white/50 font-light mb-6">Create a clock that ticks forever from the moment that changed everything.</p>
+      <button onclick="showPage('auth')" class="px-8 py-3 rounded-full text-sm font-semibold text-white hover:opacity-90 transition-all" style="background:#005bc2;">
+        Start the clock · $6
+      </button>
+    </div>
+
+  </div>
+</div>
+</div><!-- end page-moment -->
+
+<!-- PAYMENT MODAL -->
+<div id="payment-modal" class="fixed inset-0 z-[100] items-center justify-center p-4" style="display:none;">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="document.getElementById('payment-modal').style.display='none'"></div>
+  <div class="relative bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-2xl w-full max-w-sm p-7 text-center space-y-4">
+    <span class="material-symbols-outlined text-secondary text-4xl block">schedule</span>
+    <div><h3 class="text-lg font-extrabold tracking-tight text-on-surface">Payment coming soon</h3><p class="text-sm text-on-surface-variant font-light mt-1.5">We're setting up secure checkout. Your moment details are saved.</p></div>
+    <button onclick="document.getElementById('payment-modal').style.display='none'; showPage('home')" class="w-full py-2.5 bg-secondary text-white rounded-full text-sm font-semibold hover:opacity-90 transition-all">Back to home</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     INSTAGRAM CARD MODAL
+══════════════════════════════════════════ -->
+<div id="card-modal" class="fixed inset-0 z-[150] items-center justify-center p-4" style="display:none;">
+  <div class="card-modal-overlay absolute inset-0 bg-black/70" onclick="closeCardModal()"></div>
+  <div class="relative w-full max-w-lg bg-on-surface rounded-2xl overflow-hidden shadow-2xl flex flex-col" style="max-height:92vh;">
+
+    <!-- Modal header -->
+    <div class="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
+      <div>
+        <p class="text-[9px] uppercase tracking-[0.2em] text-white/40 font-bold">Share</p>
+        <h3 class="text-base font-extrabold tracking-tight text-white">Your moment card</h3>
+      </div>
+      <button onclick="closeCardModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+        <span class="material-symbols-outlined text-white/60" style="font-size:18px;">close</span>
+      </button>
+    </div>
+
+    <!-- Format selector -->
+    <div class="flex gap-2 px-5 pt-4 pb-2 shrink-0">
+      <button onclick="setCardFormat('square')" id="fmt-square" class="format-btn active flex-1 py-2 rounded-lg text-[11px] font-semibold uppercase tracking-widest border border-white/20 text-white/60 hover:text-white transition-all">
+        Square 1:1
+      </button>
+      <button onclick="setCardFormat('story')" id="fmt-story" class="format-btn flex-1 py-2 rounded-lg text-[11px] font-semibold uppercase tracking-widest border border-white/20 text-white/60 hover:text-white transition-all">
+        Story 9:16
+      </button>
+    </div>
+
+    <!-- Canvas preview -->
+    <div class="flex-1 overflow-y-auto px-5 py-3">
+      <div class="canvas-wrapper">
+        <canvas id="share-canvas" width="1080" height="1080" style="width:100%;border-radius:12px;"></canvas>
+      </div>
+    </div>
+
+    <!-- Download + share actions -->
+    <div class="px-5 py-4 border-t border-white/10 space-y-3 shrink-0">
+      <button onclick="downloadCard()" class="w-full py-3 rounded-full text-sm font-semibold text-white flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all" style="background:#005bc2;">
+        <span class="material-symbols-outlined text-white" style="font-size:16px;">download</span>
+        Download PNG
+      </button>
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="copyMomentLink()" class="py-2 rounded-full text-[11px] font-semibold text-white/60 border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-1">
+          <span class="material-symbols-outlined" style="font-size:13px;">link</span>Copy link
+        </button>
+        <button class="py-2 rounded-full text-[11px] font-semibold text-white/60 border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-1">
+          <span class="material-symbols-outlined" style="font-size:13px;">chat_bubble</span>WhatsApp
+        </button>
+        <button class="py-2 rounded-full text-[11px] font-semibold text-white/60 border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center">
+          ✕ Post
+        </button>
+      </div>
+      <p class="text-[9px] text-center uppercase tracking-widest text-white/20">Saved to your camera roll after download</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+const COMMUNITY_EVENTS = [
+  { title:"My sobriety date",         date:"2021-03-15", category:"Sobriety",     hook:"One day at a time. Every day.",         creator:"Sarah M." },
+  { title:"Our first date",           date:"2019-06-14", category:"Relationship", hook:"Two hearts, one clock.",                 creator:"James & Emma" },
+  { title:"Acme Studio founded",      date:"2020-01-10", category:"Company",      hook:"Started in a garage. Still going.",      creator:"Mike T." },
+  { title:"My daughter Ella born",    date:"2022-08-22", category:"Birth",        hook:"The best moment of my entire life.",     creator:"David L." },
+  { title:"Lost my dad",              date:"2023-01-05", category:"Loss",         hook:"Miss you every single day.",             creator:"Anonymous" },
+  { title:"Quit smoking",             date:"2020-07-04", category:"Sobriety",     hook:"Best decision I ever made. Still proud.",creator:"Rachel K." },
+  { title:"Our wedding day",          date:"2018-09-08", category:"Relationship", hook:"Said yes. Still saying it every day.",   creator:"Chris & Lily" },
+  { title:"Finished my first marathon",date:"2023-04-16",category:"Achievement",  hook:"26.2 miles. Never again. (Maybe.)",     creator:"Tom B." },
+  { title:"Company IPO",              date:"2021-11-18", category:"Company",      hook:"Five years of late nights, paid off.",   creator:"Alex W." },
+  { title:"Moved to New York",        date:"2022-03-01", category:"Achievement",  hook:"Left everything behind. Worth it.",      creator:"Nina P." },
+  { title:"My son Leo born",          date:"2020-05-12", category:"Birth",        hook:"He changed everything instantly.",       creator:"Rob M." },
+  { title:"Lost my dog Biscuit",      date:"2023-09-10", category:"Loss",         hook:"14 years of loyalty. Still hurts.",      creator:"Dana L." },
+  { title:"Two years clean",          date:"2022-06-01", category:"Sobriety",     hook:"Rock bottom was the beginning.",         creator:"Marco V." },
+  { title:"Opened my first restaurant",date:"2019-03-22",category:"Company",      hook:"A dream that finally became real.",       creator:"Priya S." },
+  { title:"My parents' divorce final",date:"2018-11-30", category:"Loss",         hook:"Nothing was the same after.",            creator:"Anonymous" },
+  { title:"Ran the NYC Marathon",     date:"2024-11-03", category:"Achievement",  hook:"Every mile was a conversation with myself.",creator:"Yuki T." },
+  { title:"Our twins were born",      date:"2021-07-19", category:"Birth",        hook:"Double the chaos. Double the love.",     creator:"Ben & Fiona" },
+  { title:"Six months sober",         date:"2024-02-14", category:"Sobriety",     hook:"Valentine's Day. Best gift I gave myself.",creator:"Jay M." },
+];
+
+// ─── EVENT DATABASE ───────────────────────
+const EVENTS = [
+  { title:"Harambe Shot",                 date:"2016-05-28", category:"Internet",  hook:"The meme that never died" },
+  { title:"First YouTube Video",          date:"2005-04-23", category:"Internet",  hook:"The entire video era started with a zoo trip" },
+  { title:"Gangnam Style Hits 1B Views",  date:"2012-12-21", category:"Internet",  hook:"First YouTube video to hit a billion views" },
+  { title:"The Dress",                    date:"2015-02-26", category:"Internet",  hook:"Blue/black vs white/gold — broke the internet" },
+  { title:"Ice Bucket Challenge",         date:"2014-08-01", category:"Internet",  hook:"Every CEO was pouring ice on their head" },
+  { title:"Vine Shuts Down",              date:"2017-01-17", category:"Internet",  hook:"Killed a generation of creators overnight" },
+  { title:"First Ever Tweet",             date:"2006-03-21", category:"Internet",  hook:"'just setting up my twttr' — Jack Dorsey" },
+  { title:"Facebook Opens to Everyone",   date:"2006-09-26", category:"Internet",  hook:"Before this, you needed a university email" },
+  { title:"Reddit Founded",               date:"2005-06-23", category:"Internet",  hook:"The front page of the internet, born" },
+  { title:"First iPhone Announced",       date:"2007-01-09", category:"Internet",  hook:"An iPod, a phone, and an internet communicator" },
+  { title:"Minecraft First Release",      date:"2009-05-17", category:"Internet",  hook:"Built by one person in a weekend" },
+  { title:"GameStop Short Squeeze",       date:"2021-01-27", category:"Internet",  hook:"Reddit vs Wall Street hedge funds" },
+  { title:"ChatGPT Launches",             date:"2022-11-30", category:"Internet",  hook:"1 million users in 5 days" },
+  { title:"Elon Musk Buys Twitter",       date:"2022-10-27", category:"Internet",  hook:"Walked in with a sink. Renamed it X." },
+  { title:"TikTok Goes Global",           date:"2017-09-01", category:"Internet",  hook:"Short video rewired an entire generation's brain" },
+  { title:"Bitcoin Whitepaper Published", date:"2008-10-31", category:"Internet",  hook:"Satoshi Nakamoto — still anonymous" },
+  { title:"Instagram Launches",           date:"2010-10-06", category:"Internet",  hook:"Filters changed how we see food forever" },
+  { title:"Pokémon GO Launches",          date:"2016-07-06", category:"Internet",  hook:"People walked into traffic, fell off cliffs, trespassed everywhere" },
+  { title:"Kobe Bryant Dies",             date:"2020-01-26", category:"Sports",    hook:"The world stopped. Everyone remembers where they were" },
+  { title:"Will Smith Slaps Chris Rock",  date:"2022-03-27", category:"Celebrity", hook:"Live on global TV. Nobody could believe it" },
+  { title:"Game of Thrones Finale",       date:"2019-05-19", category:"Film & TV", hook:"Most anticipated finale in TV history — universally hated" },
+  { title:"Parasite Wins Best Picture",   date:"2020-02-09", category:"Film & TV", hook:"First non-English film ever to win" },
+  { title:"Michael Jackson Dies",         date:"2009-06-25", category:"Celebrity", hook:"Crashed Twitter and Google simultaneously" },
+  { title:"Amy Winehouse Dies",           date:"2011-07-23", category:"Music",     hook:"27 Club. Everyone saw it coming and it still hurt" },
+  { title:"Beyoncé Drops Lemonade",       date:"2016-04-23", category:"Music",     hook:"Surprise visual album that broke the internet" },
+  { title:"Kurt Cobain Dies",             date:"1994-04-05", category:"Music",     hook:"An entire generation's identity collapsed overnight" },
+  { title:"Leicester City Wins Premier League", date:"2016-05-02", category:"Sports", hook:"5000-1 odds. The greatest sports upset ever" },
+  { title:"Usain Bolt Breaks 100m Record",date:"2008-08-16", category:"Sports",    hook:"9.69 seconds. He was celebrating before the finish line" },
+  { title:"Avengers Endgame Releases",    date:"2019-04-26", category:"Film & TV", hook:"10 years of Marvel movies paid off in one weekend" },
+  { title:"Princess Diana Dies",          date:"1997-08-31", category:"Celebrity", hook:"The whole world woke up to the news in disbelief" },
+  { title:"Moon Landing",                 date:"1969-07-20", category:"Space",     hook:"First humans to walk on another world" },
+  { title:"Voyager 1 Launched",           date:"1977-09-05", category:"Space",     hook:"Now the furthest human-made object from Earth" },
+  { title:"Curiosity Lands on Mars",      date:"2012-08-06", category:"Space",     hook:"Seven minutes of terror — and it worked" },
+  { title:"Fall of Berlin Wall",          date:"1989-11-09", category:"Politics",  hook:"The night the Cold War ended in real time" },
+  { title:"9/11 First Plane Hits",        date:"2001-09-11T08:46:00", category:"Politics", hook:"The world changed in real time on live television" },
+  { title:"Obama Elected President",      date:"2008-11-04T23:00:00", category:"Politics", hook:"First Black president of the United States" },
+  { title:"Putin Invades Ukraine",        date:"2022-02-24T05:00:00", category:"Politics", hook:"Largest military attack in Europe since WWII" },
+  { title:"Queen Elizabeth II Dies",      date:"2022-09-08T15:10:00", category:"Politics", hook:"70 years on the throne. An era ended" },
+  { title:"World Wide Web Created",       date:"1989-03-12", category:"Technology",hook:"Tim Berners-Lee's proposal changed everything" },
+  { title:"SpaceX Lands a Rocket",        date:"2015-12-21T20:29:00", category:"Technology", hook:"For the first time ever, an orbital rocket landed upright" },
+  { title:"Deep Blue Beats Kasparov",     date:"1997-05-11T19:00:00", category:"Technology", hook:"First machine to beat the world chess champion" },
+  { title:"Y2K — Nothing Happens",        date:"2000-01-01T00:00:00", category:"Technology", hook:"The most expensive non-event in history" },
+  { title:"iPod Announced",               date:"2001-10-23", category:"Technology",hook:"'1,000 songs in your pocket.' Jobs changed music forever" },
+  { title:"First Image of a Black Hole",  date:"2019-04-10T13:00:00", category:"Space", hook:"Something we thought unimaginable — photographed" },
+  { title:"Challenger Disaster",          date:"1986-01-28T16:39:00", category:"Space", hook:"Exploded 73 seconds after launch. Schools watched it live on TV" },
+  { title:"James Webb First Images",      date:"2022-07-12T14:30:00", category:"Space", hook:"The deepest image of the universe ever taken. Scientists cried" },
+  { title:"DNA Double Helix Discovered",  date:"1953-04-25", category:"Science",   hook:"Watson and Crick cracked the blueprint of life" },
+  { title:"COVID-19 Declared Pandemic",   date:"2020-03-11T18:29:00", category:"Science", hook:"The WHO announcement that changed everything overnight" },
+  { title:"Higgs Boson Confirmed",        date:"2012-07-04T09:00:00", category:"Science", hook:"The God particle — physicists wept at CERN" },
+  { title:"Chernobyl Reactor Explodes",   date:"1986-04-26T01:23:00", category:"Science", hook:"The worst nuclear disaster in history" },
+  { title:"Titanic Sinks",                date:"1912-04-15T02:20:00", category:"Disasters",hook:"1,500 people. 2 hours 40 minutes after the iceberg" },
+  { title:"Indian Ocean Tsunami",         date:"2004-12-26T07:58:00", category:"Disasters",hook:"230,000 dead. The deadliest natural disaster in modern history" },
+  { title:"Deepwater Horizon Explosion",  date:"2010-04-20T21:49:00", category:"Disasters",hook:"Largest marine oil spill ever. Burned for 87 days" },
+  { title:"OceanGate Titan Implosion",    date:"2023-06-18", category:"Disasters", hook:"The world counted down their oxygen for days. Then — nothing" },
+  { title:"MH370 Disappears",             date:"2014-03-08T01:20:00", category:"Disasters",hook:"A Boeing 777 vanished with 239 people. Never found" },
+  { title:"First Moon Landing",           date:"1969-07-20T20:17:00", category:"Firsts",    hook:"The first time humans set foot on another world" },
+  { title:"First Human in Space",         date:"1961-04-12T06:07:00", category:"Firsts",    hook:"Yuri Gagarin. 108 minutes. Changed history" },
+  { title:"First Tweet",                  date:"2006-03-21", category:"Firsts",    hook:"'just setting up my twttr' — the first words on Twitter" },
+  { title:"First iPhone Sold",            date:"2007-06-29T18:00:00", category:"Firsts",    hook:"People camped for days. The smartphone era began" },
+  { title:"First Deepfake Goes Viral",    date:"2017-12-01", category:"Firsts",    hook:"The moment reality became unreliable on the internet" },
+];
+
+const QUOTES = [
+  { text:"Time is the most valuable thing a man can spend.", author:"Theophrastus" },
+  { text:"Lost time is never found again.", author:"Benjamin Franklin" },
+  { text:"The trouble is, you think you have time.", author:"Buddha" },
+  { text:"How we spend our days is how we spend our lives.", author:"Annie Dillard" },
+  { text:"The present moment always will have been.", author:"Unknown" },
+  { text:"We must use time as a tool, not as a couch.", author:"John F. Kennedy" },
+  { text:"Time flies over us, but leaves its shadow behind.", author:"Nathaniel Hawthorne" },
+  { text:"Time takes it all, whether you want it to or not.", author:"Stephen King" },
+];
+
+const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ─── HELPERS ──────────────────────────────
+function pad(n) { return String(Math.floor(n)).padStart(2,'0'); }
+function padBig(n) { return String(Math.floor(n)).padStart(10,',').replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+
+function getElapsed(dateStr) {
+  const past = new Date(dateStr).getTime(), now = Date.now();
+  const ms = now - past; if (ms < 0) return null;
+  const totalSec = Math.floor(ms/1000), totalMin = Math.floor(totalSec/60);
+  const totalHours = Math.floor(totalMin/60), totalDays = Math.floor(totalHours/24);
+  const years = Math.floor(totalDays/365.25), days = totalDays - Math.floor(years*365.25);
+  return { years, days, h:totalHours%24, m:totalMin%60, s:totalSec%60, totalSec, totalMin, totalHours, totalDays };
+}
+
+function placeholderStyle(cat) {
+  const p = {
+    Internet:'linear-gradient(135deg,#1a1a2e,#0f3460)', Culture:'linear-gradient(135deg,#2d1b2e,#3d1a3d)',
+    Technology:'linear-gradient(135deg,#0a192f,#1d3557)', Space:'linear-gradient(135deg,#000814,#003566)',
+    Science:'linear-gradient(135deg,#0d1b2a,#2a3f55)', Politics:'linear-gradient(135deg,#1a0000,#3d1a00)',
+    Disasters:'linear-gradient(135deg,#1a1a1a,#1a0d00)', Firsts:'linear-gradient(135deg,#0a1628,#2a3d5c)',
+    Sports:'linear-gradient(135deg,#0a1a00,#1a3a00)', Music:'linear-gradient(135deg,#1a001a,#2a002a)',
+    'Film & TV':'linear-gradient(135deg,#1a1500,#2a2000)', Celebrity:'linear-gradient(135deg,#1a0a00,#2a1500)',
+    Personal:'linear-gradient(135deg,#1a2020,#0d2a2a)', Business:'linear-gradient(135deg,#0a1a10,#1a3a20)',
+    Anniversary:'linear-gradient(135deg,#1a0a1a,#2a1a2e)', Achievement:'linear-gradient(135deg,#1a1500,#2a2500)',
+    Remembrance:'linear-gradient(135deg,#1a1a1a,#2d2d2d)'
+  };
+  return p[cat] || 'linear-gradient(135deg,#1a1a1a,#2d2d2d)';
+}
+
+// Gradient colors for canvas (returns [color1, color2])
+function catGradientColors(cat) {
+  const p = {
+    Internet:['#1a1a2e','#0f3460'], Culture:['#2d1b2e','#3d1a3d'],
+    Technology:['#0a192f','#1d3557'], Space:['#000814','#003566'],
+    Science:['#0d1b2a','#2a3f55'], Politics:['#1a0000','#3d1a00'],
+    Disasters:['#1a1a1a','#1a0d00'], Firsts:['#0a1628','#2a3d5c'],
+    Sports:['#0a1a00','#1a3a00'], Music:['#1a001a','#2a002a'],
+    'Film & TV':['#1a1500','#2a2000'], Celebrity:['#1a0a00','#2a1500'],
+    Personal:['#1a2020','#0d2a2a'], Business:['#0a1a10','#1a3a20'],
+    Anniversary:['#1a0a1a','#2a1a2e'], Achievement:['#1a1500','#2a2500'],
+    Remembrance:['#1a1a1a','#2d2d2d']
+  };
+  return p[cat] || ['#1a1a1a','#2d2d2d'];
+}
+
+function slugify(s) { return (s||'').toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-').substring(0,40)||'your-moment'; }
+
+// ─── GLOBAL STAT — oldest event seconds ───
+(function updateGlobalStat() {
+  // Oldest event is the Moon Landing 1969
+  const oldest = new Date('1969-07-20T20:17:00').getTime();
+  function tick() {
+    const sec = Math.floor((Date.now() - oldest) / 1000);
+    const el = document.getElementById('stat-seconds');
+    if (el) el.textContent = sec.toLocaleString();
+  }
+  tick(); setInterval(tick, 1000);
+})();
+
+// ─── NAV CLOCK ────────────────────────────
+function updateNavClock() {
+  const now = new Date();
+  document.getElementById('nav-clock').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  document.getElementById('nav-date').textContent = `${DAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+}
+updateNavClock(); setInterval(updateNavClock, 1000);
+
+// ─── QUOTES ───────────────────────────────
+let quoteIdx = 0;
+document.getElementById('quote-text').textContent = `"${QUOTES[0].text}" — ${QUOTES[0].author}`;
+setInterval(() => {
+  const el = document.getElementById('quote-text');
+  el.classList.remove('quote-in'); el.classList.add('quote-out');
+  setTimeout(() => {
+    quoteIdx = (quoteIdx+1) % QUOTES.length;
+    el.textContent = `"${QUOTES[quoteIdx].text}" — ${QUOTES[quoteIdx].author}`;
+    el.classList.remove('quote-out'); el.classList.add('quote-in');
+  }, 500);
+}, 12000);
+
+// ─── ON THIS DAY ──────────────────────────
+function buildOTD() {
+  const now = new Date(), month = now.getMonth()+1, day = now.getDate();
+  const todays = EVENTS.filter(e => { const [,em,ed] = e.date.split('-').map(Number); return em===month && ed===day; });
+  const sec = document.getElementById('otd-section');
+  if (!todays.length) { sec.style.display='none'; return; }
+  sec.style.display='block';
+  document.getElementById('otd-heading').textContent = `${MONTHS[now.getMonth()]} ${day}`;
+  document.getElementById('otd-scroll').innerHTML = todays.map(e => {
+    const yr = parseInt(e.date.split('-')[0]), ago = now.getFullYear()-yr;
+    return `<div class="otd-card cursor-pointer" onclick="openMomentPage('${e.title.replace(/'/g,"\\'")}','${e.category}','${(e.hook||'').replace(/'/g,"\\'")}','${e.date}')">
+      <span class="text-[8px] uppercase tracking-[0.2em] text-secondary font-bold">${e.category}</span>
+      <p class="text-sm font-bold text-on-surface tracking-tight leading-snug">${e.title}</p>
+      <p class="text-[10px] text-on-surface-variant font-light leading-relaxed line-clamp-2">${e.hook}</p>
+      <div class="mt-auto pt-2 border-t border-surface-container flex items-baseline gap-1.5">
+        <span class="text-lg font-extrabold tracking-tighter text-on-surface">${ago}</span>
+        <span class="text-[8px] uppercase tracking-widest text-on-surface-variant font-medium">years ago · ${yr}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+buildOTD();
+
+// ─── HOME GRID ────────────────────────────
+let activeCategory='All', searchQuery='', filteredEvents=[], activeSubcats=['Culture','Sports','Music','Film & TV','Celebrity'], activeCommCat='All';
+
+function buildCard(event, idx) {
+  const { years, days, h, m, s } = getElapsed(event.date);
+  const hasImg = event.image && event.image.trim()!=='';
+  const delay = (idx%18)*0.03;
+  const imgHTML = hasImg
+    ? `<img class="card-img w-full h-full object-cover grayscale" src="${event.image}" alt="${event.title}" loading="lazy"/>`
+    : `<div class="card-img w-full h-full flex items-end p-3" style="background:${placeholderStyle(event.category)}"><p class="text-white/40 text-[8px] uppercase tracking-widest font-medium leading-tight line-clamp-2">${event.hook}</p></div>`;
+  return `<div class="card-anim event-card group overflow-hidden bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 relative flex flex-col cursor-pointer" style="animation-delay:${delay}s" onclick="openMomentPage('${event.title.replace(/'/g,"\\'")}','${event.category}','${(event.hook||'').replace(/'/g,"\\'")}','${event.date}')">
+    <div class="aspect-[4/3] overflow-hidden">${imgHTML}</div>
+    <div class="p-4 flex-1 flex flex-col">
+      <span class="text-[8px] uppercase tracking-[0.2em] text-secondary font-bold mb-1 block truncate">${event.category}</span>
+      <h3 class="text-sm font-bold tracking-tight text-on-surface mb-3 truncate" title="${event.title}">${event.title}</h3>
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <div class="flex flex-col"><span class="text-xl font-extrabold tracking-tighter text-on-surface live-years">${years}</span><span class="text-[7px] uppercase tracking-widest text-on-surface-variant font-medium">Years</span></div>
+        <div class="flex flex-col"><span class="text-xl font-extrabold tracking-tighter text-on-surface live-days">${days}</span><span class="text-[7px] uppercase tracking-widest text-on-surface-variant font-medium">Days</span></div>
+      </div>
+      <div class="mt-auto pt-2 border-t border-surface-container">
+        <div class="flex justify-between items-center">
+          <div class="flex items-baseline gap-1"><span class="text-sm font-medium text-secondary live-clock" style="font-family:'Space Mono',monospace;">${pad(h)}:${pad(m)}:${pad(s)}</span><span class="text-[6px] uppercase tracking-widest text-on-surface-variant ml-1">H:M:S</span></div>
+          <span class="material-symbols-outlined text-secondary/30 text-sm">history</span>
+        </div>
+      </div>
+    </div>
+    <div class="absolute top-2 right-2 flex gap-1.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <button onclick="event.stopPropagation();openCardModal('${event.title.replace(/'/g,"\\'")}','${event.category}','${(event.hook||'').replace(/'/g,"\\'")}','${event.date}')" class="w-7 h-7 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-md text-on-surface hover:bg-white transition-colors shadow-sm" title="Share card">
+        <span class="material-symbols-outlined text-[14px]" style="font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 16;">share</span>
+      </button>
+      <button onclick="event.stopPropagation()" class="w-7 h-7 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-md text-on-surface hover:bg-white transition-colors shadow-sm">
+        <span class="material-symbols-outlined text-[14px]" style="font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 16;">favorite</span>
+      </button>
+    </div>
+  </div>`;
+}
+
+function buildCommunityCard(ev, idx) {
+  const e = getElapsed(ev.date);
+  const delay = (idx % 18) * 0.03;
+  const commColors = {
+    Birth:'linear-gradient(135deg,#0a2a1a,#1a4a2a)', Loss:'linear-gradient(135deg,#1a1010,#2a1515)',
+    Sobriety:'linear-gradient(135deg,#0a1a2a,#1a3050)', Relationship:'linear-gradient(135deg,#1a0a1a,#2e1a2e)',
+    Company:'linear-gradient(135deg,#0a1a10,#1a3020)', Achievement:'linear-gradient(135deg,#1a1500,#2a2a00)',
+    Recovery:'linear-gradient(135deg,#001a1a,#002a2a)'
+  };
+  const cardBg = commColors[ev.category] || 'linear-gradient(135deg,#1a1a1a,#2d2d2d)';
+  return `<div class="card-anim event-card group overflow-hidden bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 relative flex flex-col cursor-pointer" style="animation-delay:${delay}s" onclick="openMomentPage('${ev.title.replace(/'/g,"\\'")}','${ev.category}','${(ev.hook||'').replace(/'/g,"\\'")}','${ev.date}')">
+    <div class="aspect-[4/3] overflow-hidden">
+      <div class="card-img w-full h-full flex flex-col justify-between p-4" style="background:${cardBg}">
+        <div class="flex items-center justify-between">
+          <span class="text-[8px] uppercase tracking-[0.2em] font-bold px-2 py-0.5 rounded-full" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);">${ev.category}</span>
+          <span class="material-symbols-outlined text-white/25" style="font-size:14px;">person</span>
+        </div>
+        <p class="text-white/45 text-[8px] font-light italic leading-relaxed line-clamp-2">"${ev.hook}"</p>
+      </div>
+    </div>
+    <div class="p-4 flex-1 flex flex-col">
+      <h3 class="text-sm font-bold tracking-tight text-on-surface mb-0.5 truncate">${ev.title}</h3>
+      <p class="text-[9px] text-outline-variant font-light mb-3">by ${ev.creator}</p>
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <div class="flex flex-col"><span class="text-xl font-extrabold tracking-tighter text-on-surface">${e?e.years:'—'}</span><span class="text-[7px] uppercase tracking-widest text-on-surface-variant font-medium">Years</span></div>
+        <div class="flex flex-col"><span class="text-xl font-extrabold tracking-tighter text-on-surface">${e?e.days:'—'}</span><span class="text-[7px] uppercase tracking-widest text-on-surface-variant font-medium">Days</span></div>
+      </div>
+      <div class="mt-auto pt-2 border-t border-surface-container">
+        <div class="flex justify-between items-center">
+          <div class="flex items-baseline gap-1"><span class="text-sm font-medium text-secondary" style="font-family:'Space Mono',monospace;">${e?pad(e.h)+':'+pad(e.m)+':'+pad(e.s):'00:00:00'}</span><span class="text-[6px] uppercase tracking-widest text-on-surface-variant ml-1">H:M:S</span></div>
+          <span class="material-symbols-outlined text-red-300/60 text-sm" style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 16;">favorite</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function getFiltered() {
+  if (activeCategory === 'Community') {
+    return COMMUNITY_EVENTS.filter(e => {
+      const matchCat = activeCommCat === 'All' || e.category === activeCommCat;
+      const q = searchQuery.toLowerCase();
+      return matchCat && (!q || e.title.toLowerCase().includes(q) || (e.hook||'').toLowerCase().includes(q));
+    });
+  }
+  return EVENTS.filter(e => {
+    let matchCat;
+    if (activeCategory==='All') matchCat=true;
+    else if (activeCategory==='Culture') matchCat=activeSubcats.includes(e.category);
+    else matchCat=e.category===activeCategory;
+    const q = searchQuery.toLowerCase();
+    return matchCat && (!q || e.title.toLowerCase().includes(q) || (e.hook||'').toLowerCase().includes(q) || e.category.toLowerCase().includes(q));
+  });
+}
+
+function renderGrid() {
+  filteredEvents = getFiltered();
+  const grid=document.getElementById('events-grid'), empty=document.getElementById('empty-state'), cnt=document.getElementById('results-count');
+  const isCommunity = activeCategory === 'Community';
+  const lbl=document.getElementById('grid-label'), ttl=document.getElementById('grid-title');
+  if(lbl) lbl.textContent = isCommunity ? 'User Created' : 'Curated';
+  if(ttl) ttl.textContent = isCommunity ? 'Community Moments' : 'Historic Moments';
+  if (!filteredEvents.length) {
+    grid.innerHTML = isCommunity ? `<div class="col-span-full py-16 text-center"><span class="material-symbols-outlined text-outline-variant text-4xl mb-3 block">group</span><p class="text-on-surface-variant text-sm mb-4">No community moments here yet.</p><button onclick="showPage('auth')" class="px-5 py-2 bg-secondary text-white rounded-full text-xs font-semibold hover:opacity-90 transition-all">Be the first → $6</button></div>` : '';
+    empty.style.display = isCommunity ? 'none' : 'block';
+    document.getElementById('empty-query').textContent=searchQuery; cnt.textContent='';
+  } else {
+    empty.style.display='none';
+    grid.innerHTML=filteredEvents.map((e,i)=>isCommunity?buildCommunityCard(e,i):buildCard(e,i)).join('');
+    cnt.textContent=`${filteredEvents.length} moment${filteredEvents.length!==1?'s':''}`;
+  }
+}
+
+document.querySelectorAll('.pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeCategory=btn.dataset.cat;
+    document.querySelectorAll('.pill').forEach(p => { p.classList.remove('pill-active'); p.classList.add('bg-surface-container-high','text-on-surface-variant'); });
+    btn.classList.add('pill-active'); btn.classList.remove('bg-surface-container-high','text-on-surface-variant');
+    const sr=document.getElementById('subcat-filters');
+    const cr=document.getElementById('community-subcat-filters');
+    if (activeCategory==='Culture') { sr.classList.remove('hidden'); sr.classList.add('flex'); cr.classList.add('hidden'); cr.classList.remove('flex'); activeSubcats=['Culture','Sports','Music','Film & TV','Celebrity']; document.querySelectorAll('.subpill').forEach(p=>{p.classList.remove('subpill-active');p.classList.add('bg-surface-container','text-on-surface-variant');}); document.querySelector('.subpill').classList.add('subpill-active'); document.querySelector('.subpill').classList.remove('bg-surface-container','text-on-surface-variant'); }
+    else if (activeCategory==='Community') { cr.classList.remove('hidden'); cr.classList.add('flex'); sr.classList.add('hidden'); sr.classList.remove('flex'); activeCommCat='All'; document.querySelectorAll('.commpill').forEach(p=>{p.style.background='';p.style.color='';p.classList.add('bg-surface-container','text-on-surface-variant');}); document.querySelector('.commpill').style.background='#2d3338'; document.querySelector('.commpill').style.color='#f9f9fb'; document.querySelector('.commpill').classList.remove('bg-surface-container','text-on-surface-variant'); }
+    else { sr.classList.add('hidden'); sr.classList.remove('flex'); cr.classList.add('hidden'); cr.classList.remove('flex'); }
+    renderGrid();
+  });
+});
+
+document.querySelectorAll('.subpill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const val=btn.dataset.subcat; activeSubcats=val.includes(',')?val.split(','):[val];
+    document.querySelectorAll('.subpill').forEach(p=>{p.classList.remove('subpill-active');p.classList.add('bg-surface-container','text-on-surface-variant');});
+    btn.classList.add('subpill-active'); btn.classList.remove('bg-surface-container','text-on-surface-variant');
+    renderGrid();
+  });
+});
+
+document.querySelectorAll('.commpill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeCommCat = btn.dataset.commcat;
+    document.querySelectorAll('.commpill').forEach(p=>{p.style.background='';p.style.color='';p.classList.add('bg-surface-container','text-on-surface-variant');});
+    btn.style.background='#2d3338'; btn.style.color='#f9f9fb'; btn.classList.remove('bg-surface-container','text-on-surface-variant');
+    renderGrid();
+  });
+});
+
+document.getElementById('search-input').addEventListener('input', e => { searchQuery=e.target.value; renderGrid(); });
+document.addEventListener('keydown', e => { if ((e.metaKey||e.ctrlKey)&&e.key==='k') { e.preventDefault(); document.getElementById('search-input').focus(); } });
+
+function updateClocks() {
+  document.querySelectorAll('#events-grid > div').forEach((card,i) => {
+    const ev=filteredEvents[i]; if (!ev) return;
+    const r=getElapsed(ev.date);
+    const c=card.querySelector('.live-clock'), y=card.querySelector('.live-years'), d=card.querySelector('.live-days');
+    if(c) c.textContent=`${pad(r.h)}:${pad(r.m)}:${pad(r.s)}`;
+    if(y) y.textContent=r.years;
+    if(d) d.textContent=r.days;
+  });
+}
+renderGrid(); setInterval(updateClocks, 1000);
+
+// Arrival bar clock
+const arrivalTime = Date.now();
+setInterval(() => {
+  const e=Math.floor((Date.now()-arrivalTime)/1000), h=Math.floor(e/3600), m=Math.floor((e%3600)/60), s=e%60;
+  const el=document.getElementById('bar-clock'); if(el) el.textContent=`${pad(h)}:${pad(m)}:${pad(s)}`;
+}, 1000);
+
+// ─── SUGGEST MODAL ────────────────────────
+function openSuggest() { document.getElementById('suggest-modal').style.display='flex'; document.body.style.overflow='hidden'; }
+function closeSuggest() { document.getElementById('suggest-modal').style.display='none'; document.body.style.overflow=''; document.getElementById('suggest-success').classList.add('hidden'); document.getElementById('suggest-btn').classList.remove('hidden'); }
+function submitSuggest() {
+  const t=document.getElementById('suggest-title').value.trim(), d=document.getElementById('suggest-date').value, c=document.getElementById('suggest-category').value, h=document.getElementById('suggest-hook').value.trim();
+  if (!t||!d||!c||!h) { alert('Please fill in all fields.'); return; }
+  document.getElementById('suggest-btn').classList.add('hidden'); document.getElementById('suggest-success').classList.remove('hidden');
+  setTimeout(closeSuggest, 2500);
+}
+
+// ─── PAGE NAV ─────────────────────────────
+const ALL_PAGES = ['home','auth','create','profile','moment'];
+function showPage(name) {
+  ALL_PAGES.forEach(p => { const el=document.getElementById('page-'+p); if(el) el.classList.toggle('active', p===name); });
+  window.scrollTo(0,0);
+  const sb=document.getElementById('sticky-bar'); if(sb) sb.style.display=name==='home'?'':'none';
+  if (name==='create') updatePreview();
+  if (name==='profile') updateProfileClocks();
+}
+showPage('home');
+
+// ─── AUTH ─────────────────────────────────
+function switchTab(tab) {
+  const lf=document.getElementById('form-login'), rf=document.getElementById('form-register');
+  const ln=document.getElementById('tab-line'), tl=document.getElementById('tab-login'), tr=document.getElementById('tab-register');
+  if (tab==='login') { lf.classList.remove('hidden'); rf.classList.add('hidden'); ln.style.transform='translateX(0)'; tl.style.color='#005bc2'; tr.style.color=''; }
+  else { lf.classList.add('hidden'); rf.classList.remove('hidden'); ln.style.transform='translateX(100%)'; tr.style.color='#005bc2'; tl.style.color=''; }
+}
+function togglePw(id, icon) { const el=document.getElementById(id); el.type=el.type==='password'?'text':'password'; icon.textContent=el.type==='password'?'visibility_off':'visibility'; }
+const regPw=document.getElementById('reg-pw');
+if(regPw) regPw.addEventListener('input', () => {
+  const v=regPw.value; let s=0;
+  if(v.length>=8)s++; if(/[A-Z]/.test(v))s++; if(/[0-9]/.test(v))s++; if(/[^A-Za-z0-9]/.test(v))s++;
+  const cols=['bg-red-400','bg-orange-400','bg-yellow-400','bg-green-500'];
+  ['bar1','bar2','bar3','bar4'].forEach((id,i) => { const b=document.getElementById(id); if(b) b.className='h-0.5 flex-1 rounded-full '+(i<s?cols[s-1]:'bg-surface-container-high'); });
+});
+
+// ─── CREATE ───────────────────────────────
+let selVis='private', listingOn=false, prevDate=null, prevClockInt=null;
+const gradMap = { Internet:'linear-gradient(135deg,#1a1a2e,#0f3460)', Culture:'linear-gradient(135deg,#2d1b2e,#3d1a3d)', Technology:'linear-gradient(135deg,#0a192f,#1d3557)', Space:'linear-gradient(135deg,#000814,#003566)', Science:'linear-gradient(135deg,#0d1b2a,#2a3f55)', Politics:'linear-gradient(135deg,#1a0000,#3d1a00)', Disasters:'linear-gradient(135deg,#1a1a1a,#1a0d00)', Firsts:'linear-gradient(135deg,#0a1628,#2a3d5c)', Personal:'linear-gradient(135deg,#1a2020,#0d2a2a)', Business:'linear-gradient(135deg,#0a1a10,#1a3a20)', Anniversary:'linear-gradient(135deg,#1a0a1a,#2a1a2e)', Achievement:'linear-gradient(135deg,#1a1500,#2a2500)', Remembrance:'linear-gradient(135deg,#1a1a1a,#2d2d2d)' };
+
+function updatePreview() {
+  const title=(document.getElementById('f-title')||{}).value||'', date=(document.getElementById('f-date')||{}).value||'', time=(document.getElementById('f-time')||{}).value||'', cat=(document.getElementById('f-category')||{}).value||'', hook=(document.getElementById('f-hook')||{}).value||'';
+  const tc=document.getElementById('title-count'); if(tc) tc.textContent=title.length+' / 60';
+  const hc=document.getElementById('hook-count');  if(hc) hc.textContent=hook.length+' / 120';
+  const pt=document.getElementById('prev-title'); if(pt){pt.textContent=title||'Your moment title';pt.style.color=title?'':'#acb3b8';pt.style.fontStyle=title?'':'italic';}
+  const pc=document.getElementById('prev-cat'); if(pc) pc.textContent=cat||'Category';
+  const ph=document.getElementById('prev-hook-ov'); if(ph) ph.textContent=hook;
+  const pu=document.getElementById('prev-url'); if(pu) pu.textContent='ithasbeen.com/m/'+slugify(title);
+  const pp=document.getElementById('prev-placeholder'); if(pp) pp.style.background=gradMap[cat]||gradMap.Internet;
+  if(date){prevDate=time?date+'T'+time+':00':date+'T00:00:00';updatePrevClock();if(!prevClockInt)prevClockInt=setInterval(updatePrevClock,1000);}
+  else{prevDate=null;['prev-years','prev-days'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='—';});const cl=document.getElementById('prev-clock');if(cl)cl.textContent='00:00:00';if(prevClockInt){clearInterval(prevClockInt);prevClockInt=null;}}
+}
+function updatePrevClock() {
+  if(!prevDate) return; const e=getElapsed(prevDate); if(!e) return;
+  const py=document.getElementById('prev-years');if(py)py.textContent=e.years;
+  const pd=document.getElementById('prev-days');if(pd)pd.textContent=e.days;
+  const pc=document.getElementById('prev-clock');if(pc)pc.textContent=`${pad(e.h)}:${pad(e.m)}:${pad(e.s)}`;
+}
+function selectVis(val, el) {
+  selVis=val;
+  document.querySelectorAll('.vis-opt').forEach(o=>{o.classList.remove('selected');const d=o.querySelector('.vdot');if(d){d.style.background='';d.style.borderColor='#acb3b8';}});
+  el.classList.add('selected'); const d=el.querySelector('.vdot');if(d){d.style.background='#005bc2';d.style.borderColor='#005bc2';}
+  const icons={private:'lock',unlisted:'link',public:'public'}, labels={private:'Private',unlisted:'Unlisted',public:'Public'};
+  const vi=document.getElementById('prev-vis-icon');if(vi)vi.textContent=icons[val];
+  const vl=document.getElementById('prev-vis-label');if(vl)vl.textContent=labels[val];
+}
+function toggleListing() {
+  listingOn=!listingOn;
+  const box=document.getElementById('listing-box'), chk=document.getElementById('listing-check'), det=document.getElementById('listing-detail'), lin=document.getElementById('listing-line'), tot=document.getElementById('total-price');
+  if(box) box.classList.toggle('active', listingOn);
+  if(chk){chk.innerHTML=listingOn?'<span class="material-symbols-outlined text-secondary" style="font-size:14px;">check</span>':'';chk.style.borderColor=listingOn?'#005bc2':'';}
+  if(det) det.classList.toggle('hidden',!listingOn);
+  if(lin) lin.classList.toggle('hidden',!listingOn);
+  if(tot) tot.textContent=listingOn?'$10':'$6';
+}
+function handleImageUpload(e){const f=e.target.files[0];if(f)showImgPreview(f);}
+function handleDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))showImgPreview(f);}
+function showImgPreview(file){const r=new FileReader();r.onload=ev=>{const s=ev.target.result;document.getElementById('drop-zone').classList.add('hidden');document.getElementById('image-preview-wrap').classList.remove('hidden');document.getElementById('image-preview').src=s;document.getElementById('prev-img').src=s;document.getElementById('prev-img').classList.remove('hidden');document.getElementById('prev-placeholder').classList.add('hidden');};r.readAsDataURL(file);}
+function removeImage(){document.getElementById('drop-zone').classList.remove('hidden');document.getElementById('image-preview-wrap').classList.add('hidden');document.getElementById('prev-img').classList.add('hidden');document.getElementById('prev-placeholder').classList.remove('hidden');document.getElementById('f-image').value='';}
+function handleSubmit(){const t=(document.getElementById('f-title')||{}).value||'',d=(document.getElementById('f-date')||{}).value||'',c=(document.getElementById('f-category')||{}).value||'';if(!t||!d||!c){alert('Please fill in title, date and category.');return;}document.getElementById('payment-modal').style.display='flex';}
+
+// ─── PROFILE ──────────────────────────────
+function switchProfileTab(tab) {
+  ['moments','saved','settings'].forEach(t=>{const c=document.getElementById('profile-tab-'+t),b=document.getElementById('ptab-'+t);if(!c||!b)return;c.classList.toggle('hidden',t!==tab);b.style.color=t===tab?'#005bc2':'';b.style.borderBottomColor=t===tab?'#005bc2':'transparent';});
+}
+function updateProfileClocks() {
+  const elapsed=id=>{ const e=document.getElementById(id); if(!e) return null; return getElapsed(e.dataset.date); };
+  document.querySelectorAll('.pf-clock').forEach(el=>{const e=getElapsed(el.dataset.date);if(e)el.textContent=`${pad(e.h)}:${pad(e.m)}:${pad(e.s)}`;});
+  document.querySelectorAll('.pf-years').forEach(el=>{const e=getElapsed(el.dataset.date);if(e)el.textContent=e.years;});
+  document.querySelectorAll('.pf-days').forEach(el=>{const e=getElapsed(el.dataset.date);if(e)el.textContent=e.days;});
+}
+updateProfileClocks(); setInterval(updateProfileClocks,1000);
+
+// ─── PUBLIC MOMENT PAGE ───────────────────
+let momentData = null, momentClockInt = null;
+
+function openMomentPage(title, category, hook, date, imageUrl='') {
+  momentData = { title, category, hook, date, imageUrl };
+  // Hero
+  document.getElementById('moment-title-display').textContent = title;
+  document.getElementById('moment-hook-display').textContent = hook;
+  document.getElementById('moment-category-badge').textContent = category;
+  document.getElementById('moment-url-display').textContent = `ithasbeen.com/m/${slugify(title)}`;
+  document.getElementById('moment-creator').textContent = 'The Collective';
+  document.getElementById('moment-created-at').textContent = `Added to the collective memory`;
+  document.getElementById('moment-context-text').textContent = hook || `${title} — one of the moments that defined our collective timeline.`;
+  // Hero image
+  const heroImg = document.getElementById('moment-hero-img');
+  if (imageUrl) { heroImg.src=imageUrl; heroImg.classList.remove('hidden'); } else { heroImg.classList.add('hidden'); }
+  // Hero gradient based on category
+  const [c1,c2] = catGradientColors(category);
+  document.querySelector('.moment-hero').style.background = `linear-gradient(160deg, ${c1} 0%, ${c2} 100%)`;
+  // Date display
+  const d = new Date(date);
+  document.getElementById('moment-date-display').textContent = `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  // Related moments
+  buildRelated(category, title);
+  // Start clock
+  if (momentClockInt) clearInterval(momentClockInt);
+  updateMomentClock();
+  momentClockInt = setInterval(updateMomentClock, 1000);
+  // Favourite state reset
+  document.getElementById('fav-icon').style.setProperty('font-variation-settings','\'FILL\' 0,\'wght\' 300,\'GRAD\' 0,\'opsz\' 24');
+  document.getElementById('fav-icon').style.color = '';
+  showPage('moment');
+}
+
+function updateMomentClock() {
+  if (!momentData) return;
+  const e = getElapsed(momentData.date); if (!e) return;
+  document.getElementById('moment-big-clock').textContent = `${pad(e.h)}:${pad(e.m)}:${pad(e.s)}`;
+  document.getElementById('moment-years-display').textContent = e.years;
+  document.getElementById('moment-days-display').textContent = e.days;
+  document.getElementById('breakdown-years').textContent = e.years;
+  document.getElementById('breakdown-days').textContent = e.days;
+  document.getElementById('breakdown-hours').textContent = e.h;
+  document.getElementById('breakdown-mins').textContent = e.m;
+  // Total seconds with commas
+  document.getElementById('breakdown-seconds').textContent = e.totalSec.toLocaleString();
+}
+
+function buildRelated(category, currentTitle) {
+  const related = EVENTS.filter(e => e.category===category && e.title!==currentTitle).slice(0,6);
+  const grid = document.getElementById('related-grid');
+  if (!related.length) { document.getElementById('related-section').style.display='none'; return; }
+  document.getElementById('related-section').style.display='block';
+  grid.innerHTML = related.map(e => {
+    const el = getElapsed(e.date);
+    return `<div class="group bg-surface-container-lowest rounded-xl border border-outline-variant/10 overflow-hidden cursor-pointer hover:shadow-md transition-all" onclick="openMomentPage('${e.title.replace(/'/g,"\\'")}','${e.category}','${(e.hook||'').replace(/'/g,"\\'")}','${e.date}')">
+      <div class="aspect-[4/3]" style="background:${placeholderStyle(e.category)};display:flex;align-items:flex-end;padding:10px"><p class="text-white/40 text-[7px] uppercase tracking-widest font-medium leading-tight line-clamp-2">${e.hook}</p></div>
+      <div class="p-3">
+        <p class="text-[8px] uppercase tracking-[0.2em] text-secondary font-bold mb-0.5">${e.category}</p>
+        <p class="text-xs font-bold text-on-surface truncate leading-snug mb-1">${e.title}</p>
+        <p class="text-xs font-mono font-medium text-secondary">${el?el.years:0}y ${el?el.days:0}d</p>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Copy link
+function copyMomentLink() {
+  const url = momentData ? `ithasbeen.com/m/${slugify(momentData.title)}` : 'ithasbeen.com';
+  navigator.clipboard.writeText(url).catch(()=>{});
+  const toast = document.getElementById('copy-toast');
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 2000);
+}
+
+// Favourite toggle
+let isFav = false;
+function toggleFav() {
+  isFav = !isFav;
+  const icon = document.getElementById('fav-icon');
+  icon.style.setProperty('font-variation-settings', isFav ? "'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24" : "'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24");
+  icon.style.color = isFav ? '#e03e3e' : '';
+}
+
+function openCardModalFromMoment() {
+  if (momentData) openCardModal(momentData.title, momentData.category, momentData.hook, momentData.date);
+}
+
+// ─── INSTAGRAM CARD GENERATOR ─────────────
+let cardData = null, cardFormat = 'square';
+
+function openCardModal(title, category, hook, date) {
+  cardData = { title, category, hook, date };
+  document.getElementById('card-modal').style.display='flex';
+  document.body.style.overflow='hidden';
+  // Small delay to let modal render
+  setTimeout(() => renderCard(), 80);
+}
+function closeCardModal() {
+  document.getElementById('card-modal').style.display='none';
+  document.body.style.overflow='';
+}
+function setCardFormat(fmt) {
+  cardFormat = fmt;
+  document.getElementById('fmt-square').classList.toggle('active', fmt==='square');
+  document.getElementById('fmt-story').classList.toggle('active', fmt==='story');
+  const canvas = document.getElementById('share-canvas');
+  if (fmt==='story') { canvas.width=1080; canvas.height=1920; }
+  else { canvas.width=1080; canvas.height=1080; }
+  renderCard();
+}
+
+function renderCard() {
+  if (!cardData) return;
+  const canvas = document.getElementById('share-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const e = getElapsed(cardData.date);
+  if (!e) return;
+
+  // ── Background gradient ──
+  const [c1,c2] = catGradientColors(cardData.category);
+  const grd = ctx.createLinearGradient(0, 0, W, H);
+  grd.addColorStop(0, c1);
+  grd.addColorStop(1, c2);
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Radial glow overlay ──
+  const glow = ctx.createRadialGradient(W*0.5, H*0.25, 0, W*0.5, H*0.25, W*0.7);
+  glow.addColorStop(0, 'rgba(0,91,194,0.22)');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow; ctx.fillRect(0,0,W,H);
+
+  // ── Horizontal rule lines ──
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  const lineCount = 24;
+  for (let i=0;i<lineCount;i++) { const y=i*(H/lineCount); ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  const isStory = H > W;
+  const pad = 80;
+
+  // ── Brand — top left ──
+  ctx.font = `400 ${isStory?30:26}px 'Space Mono', 'Courier New', monospace`;
+  ctx.fillStyle = 'rgba(255,255,255,0.20)';
+  ctx.textAlign = 'left';
+  ctx.fillText('it has been', pad, pad + (isStory?36:30));
+
+  // ── ithasbeen.com — top right ──
+  ctx.font = `400 ${isStory?22:18}px 'Space Mono', 'Courier New', monospace`;
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.textAlign = 'right';
+  ctx.fillText('ithasbeen.com', W-pad, pad + (isStory?36:30));
+
+  // ── Category pill ──
+  ctx.textAlign = 'center';
+  const catText = cardData.category.toUpperCase();
+  const catFontSize = isStory ? 24 : 20;
+  ctx.font = `700 ${catFontSize}px Inter, sans-serif`;
+  const catW = ctx.measureText(catText).width + 48;
+  const catH = isStory ? 44 : 38;
+  const catY = isStory ? H*0.22 : H*0.23;
+  ctx.fillStyle = 'rgba(0,91,194,0.45)';
+  roundRect(ctx, W/2-catW/2, catY-catH*0.75, catW, catH, 999);
+  ctx.fillStyle = '#82b4ff';
+  ctx.fillText(catText, W/2, catY);
+
+  // ── Title ──
+  const titleFontSize = isStory ? 68 : 58;
+  ctx.font = `900 ${titleFontSize}px Inter, sans-serif`;
+  ctx.fillStyle = '#ffffff';
+  const titleY = isStory ? H*0.31 : H*0.33;
+  wrapText(ctx, cardData.title, W/2, titleY, W - pad*2.2, titleFontSize*1.15);
+
+  // ── Divider line ──
+  const divY = isStory ? H*0.41 : H*0.42;
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(pad, divY); ctx.lineTo(W-pad, divY); ctx.stroke();
+
+  // ── Big clock ──
+  const clockSize = isStory ? 148 : 128;
+  ctx.font = `700 ${clockSize}px 'Space Mono', 'Courier New', monospace`;
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  const clockY = isStory ? H*0.54 : H*0.56;
+  ctx.fillText(`${pad2(e.h)}:${pad2(e.m)}:${pad2(e.s)}`, W/2, clockY);
+
+  // Sub-label
+  ctx.font = `400 ${isStory?20:16}px Inter, sans-serif`;
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.fillText('H O U R S   ·   M I N U T E S   ·   S E C O N D S', W/2, clockY + (isStory?48:40));
+
+  // ── Years / Days ──
+  const statsY = isStory ? H*0.70 : H*0.73;
+  const numSize = isStory ? 96 : 80;
+  const subSize = isStory ? 20 : 17;
+
+  ctx.font = `900 ${numSize}px Inter, sans-serif`;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(String(e.years), W*0.27, statsY);
+  ctx.font = `400 ${subSize}px Inter, sans-serif`;
+  ctx.fillStyle = 'rgba(255,255,255,0.30)';
+  ctx.fillText('YEARS', W*0.27, statsY+(isStory?36:30));
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(W/2, statsY-(isStory?72:60)); ctx.lineTo(W/2, statsY+(isStory?42:36)); ctx.stroke();
+
+  ctx.font = `900 ${numSize}px Inter, sans-serif`;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(String(e.days), W*0.73, statsY);
+  ctx.font = `400 ${subSize}px Inter, sans-serif`;
+  ctx.fillStyle = 'rgba(255,255,255,0.30)';
+  ctx.fillText('DAYS', W*0.73, statsY+(isStory?36:30));
+
+  // ── Hook ──
+  if (cardData.hook) {
+    const hookY = isStory ? H*0.83 : H*0.87;
+    ctx.font = `300 italic ${isStory?28:24}px Inter, sans-serif`;
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.textAlign = 'center';
+    wrapText(ctx, `"${cardData.hook}"`, W/2, hookY, W-pad*2.8, isStory?42:36);
+  }
+
+  ctx.textAlign = 'left';
+}
+
+function pad2(n) { return String(Math.floor(n)).padStart(2,'0'); }
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r); ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath(); ctx.fill();
+}
+
+function wrapText(ctx, text, x, y, maxW, lineH) {
+  const words=text.split(' '); let line='', lines=[];
+  for(let i=0;i<words.length;i++){const test=line+words[i]+' ';if(ctx.measureText(test).width>maxW&&i>0){lines.push(line.trim());line=words[i]+' ';}else{line=test;}}
+  lines.push(line.trim());
+  const startY = y - ((lines.length-1)*lineH/2);
+  lines.forEach((l,i)=>ctx.fillText(l, x, startY+i*lineH));
+}
+
+// Live card clock update
+setInterval(() => { if (document.getElementById('card-modal').style.display==='flex' && cardData) renderCard(); }, 1000);
+
+function downloadCard() {
+  const canvas = document.getElementById('share-canvas');
+  const link = document.createElement('a');
+  link.download = `ithasbeen-${slugify(cardData?.title||'moment')}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+<!-- TWEAKS PANEL -->
+<div id="tweaks-panel" class="fixed bottom-20 right-4 z-[300] bg-on-surface rounded-2xl shadow-2xl w-64 p-5 space-y-4 transition-all" style="display:none;">
+  <div class="flex items-center justify-between mb-1">
+    <p class="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold">Tweaks</p>
+    <button onclick="document.getElementById('tweaks-panel').style.display='none'" class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"><span class="material-symbols-outlined text-white/40" style="font-size:14px;">close</span></button>
+  </div>
+  <div class="space-y-1.5">
+    <label class="text-[10px] uppercase tracking-widest text-white/40 font-medium block">Accent color</label>
+    <div class="flex gap-2">
+      <button onclick="setAccent('#005bc2','#0050ab')" class="w-7 h-7 rounded-full border-2 border-white/20" style="background:#005bc2" title="Blue"></button>
+      <button onclick="setAccent('#7c3aed','#6d28d9')" class="w-7 h-7 rounded-full border-2 border-white/20" style="background:#7c3aed" title="Purple"></button>
+      <button onclick="setAccent('#059669','#047857')" class="w-7 h-7 rounded-full border-2 border-white/20" style="background:#059669" title="Green"></button>
+      <button onclick="setAccent('#dc2626','#b91c1c')" class="w-7 h-7 rounded-full border-2 border-white/20" style="background:#dc2626" title="Red"></button>
+      <button onclick="setAccent('#d97706','#b45309')" class="w-7 h-7 rounded-full border-2 border-white/20" style="background:#d97706" title="Amber"></button>
+    </div>
+  </div>
+  <div class="space-y-1.5">
+    <label class="text-[10px] uppercase tracking-widest text-white/40 font-medium block">Card density</label>
+    <div class="flex gap-2">
+      <button onclick="setDensity(4)" class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-widest text-white/60 border border-white/10 hover:bg-white/10 transition-all density-btn" data-cols="4">Cozy</button>
+      <button onclick="setDensity(6)" class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-widest text-white/60 border border-white/10 hover:bg-white/10 transition-all density-btn" data-cols="6">Default</button>
+      <button onclick="setDensity(8)" class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-widest text-white/60 border border-white/10 hover:bg-white/10 transition-all density-btn" data-cols="8">Dense</button>
+    </div>
+  </div>
+  <div class="space-y-1.5">
+    <label class="text-[10px] uppercase tracking-widest text-white/40 font-medium block">Card images</label>
+    <div class="flex gap-2">
+      <button onclick="setGrayscale(true)" class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-widest text-white/60 border border-white/10 hover:bg-white/10 transition-all">B&W</button>
+      <button onclick="setGrayscale(false)" class="flex-1 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-widest text-white/60 border border-white/10 hover:bg-white/10 transition-all">Color</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Tweaks
+window.addEventListener('message', e => {
+  if (e.data?.type === '__activate_edit_mode') document.getElementById('tweaks-panel').style.display = 'block';
+  if (e.data?.type === '__deactivate_edit_mode') document.getElementById('tweaks-panel').style.display = 'none';
+});
+window.parent.postMessage({type: '__edit_mode_available'}, '*');
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentColor": "#005bc2",
+  "accentDim": "#0050ab",
+  "density": 4,
+  "grayscale": true
+}/*EDITMODE-END*/;
+
+function setAccent(color, dim) {
+  document.documentElement.style.setProperty('--accent', color);
+  // Update all secondary-colored elements via CSS variable trick
+  const style = document.getElementById('accent-style') || (() => { const s = document.createElement('style'); s.id='accent-style'; document.head.appendChild(s); return s; })();
+  style.textContent = `.text-secondary{color:${color}!important}.bg-secondary{background:${color}!important}.border-secondary{border-color:${color}!important}.focus\\:ring-secondary\\/20:focus{--tw-ring-color:${color}33!important}`;
+  window.parent.postMessage({type:'__edit_mode_set_keys', edits:{accentColor:color, accentDim:dim}}, '*');
+}
+
+function setDensity(cols) {
+  const grid = document.getElementById('events-grid');
+  if (!grid) return;
+  grid.className = grid.className.replace(/xl:grid-cols-\d+/, `xl:grid-cols-${cols}`);
+  document.querySelectorAll('.density-btn').forEach(b => b.classList.toggle('bg-white/20', b.dataset.cols == cols));
+  window.parent.postMessage({type:'__edit_mode_set_keys', edits:{density:cols}}, '*');
+}
+
+function setGrayscale(on) {
+  const style = document.getElementById('gs-style') || (() => { const s = document.createElement('style'); s.id='gs-style'; document.head.appendChild(s); return s; })();
+  style.textContent = on ? '' : '.event-card img { filter: none !important; }';
+  window.parent.postMessage({type:'__edit_mode_set_keys', edits:{grayscale:on}}, '*');
+}
+</script>
+
+</body>
+</html>
